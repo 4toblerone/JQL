@@ -89,7 +89,7 @@ class ParseText:
         self.gdejebio=[createnode(nodes["expr"])]
         self.x=0
 
-    #@resetfileds
+    @resetfileds
     def parse(self,tokenList):
     
         listapravila = grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
@@ -115,9 +115,7 @@ class ParseText:
                 return self.parse(tokenList)
             else:
                 return False
-            #AKO JE BROJ CLANOVA LISTE TJ. PRAVILA VECI OD BROJA PREOSTALIH TOKENA PREDJI NA SLEDECE PRAVILO AKO GA IMA AKO GA NEMA GRESKA
-            #dodaj proveru i za ostale moguce kobinacije pravila koje proizilaze iz jednog nonterminala
-            #izvrti sve u for petlji , a pre toga ne udje u if deo iznad 
+        
         for index, pravilo in enumerate(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]): 
         #proveri da li je list/terminal i da li je jednak tipu tokena
             self.gdejebio.append(pravilo)
