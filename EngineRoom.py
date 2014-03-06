@@ -1,9 +1,11 @@
 from Lexer import Lexer
+from collections import deque
 
 class Node:
     """docstring for Node"""
     def __init__(self):
         self.childrens=[]
+
 
     def add(self,child):
         self.childrens.append(child)
@@ -55,20 +57,22 @@ def createnode(class_name):
     instance = node_class()
     return instance
 
-grammar = {"expr":[["predicate","object" , "condition"],["object", "predicate", "condition"]],
-            "predicate":[["select"],["insert"],["delete"],["replace"]],
-            "object":[["word"],["number"]],
-            "condition":[["attribute" , "word" , "attribute"]],
-            "attribute":[["word","attx"],["attx", "number"]],
-            "attx":[["word","word"],["word", "number"]],
-            }
+# grammar = {"expr":[["predicate","object" , "condition"],["object", "predicate", "condition"]],
+#             "predicate":[["select"],["insert"],["delete"],["replace"]],
+#             "object":[["word"],["number"]],
+#             "condition":[["attribute" , "word" , "attribute"]],
+#             "attribute":[["word","attx"],["attx", "number"]],
+#             "attx":[["word","word"],["word", "number"]],
+#             }
 
-# grammar={"expr":[["mathop"]],
-#            "mathop":[["number", "mathop" , "number"] , ["number"]],
-#            "object": [["word"]] }
+grammar={"expr":[["mathop"]],
+           "mathop":[["number", "operator" , "mathop"] , ["number"]],
+           "operator": [["plus"],["minus"]] }
 
-tokenList = Lexer().breakDownStringToTokens("insert 7 all nesto nestooo bla bla bla 7")
-#tokenList = Lexer().breakDownStringToTokens("7 7 7")
+#tokenList = Lexer().breakDownStringToTokens("insert 7 all nesto nestooo bla bla bla 7 ")
+tokenList = Lexer().breakDownStringToTokens("7 + 7 - 7")
+
+izbaceni={}
 
 print tokenList
 
@@ -79,7 +83,7 @@ def resetfileds(fn):
             return result 
         return wrapper
 
-class ParseText:
+class ParseText:    
 
     def __init__(self):
         self.cacastack  = ['expr']
@@ -89,7 +93,7 @@ class ParseText:
         self.gdejebio=[createnode(nodes["expr"])]
         self.x=0
 
-    @resetfileds
+    #@resetfileds
     def parse(self,tokenList):
     
         listapravila = grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
@@ -112,6 +116,7 @@ class ParseText:
             if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]:
             #prebaci na sledece pravilo 
                 self.gdejestao[self.cacastack[-1]][-1][1]+=1
+                #ovde izbrisi sa gdejebio poslednji i obrisi decu njegovog caleta   
                 return self.parse(tokenList)
             else:
                 return False
@@ -135,7 +140,9 @@ class ParseText:
                         if len(self.cacastack)>1:
                             #ne moze da se vrati skroz do kraja , tj moze samo do expr
                             if len(self.gdejestao[self.cacastack[-1]])>1:
-                                del self.gdejestao[self.cacastack[-1]][-1]
+                                poslednji = self.gdejestao[self.cacastack[-1]].pop()
+                                izbaceni[self.cacastack[-1]].append((izbaceni[self.cacastack[-1]][0],poslednji))
+                                #del self.gdejestao[self.cacastack[-1]][-1]
                             self.cacastack.pop()
                             return self.parse(tokenList)
                         else:
@@ -182,6 +189,8 @@ class ParseText:
                 if pravilo not in self.gdejestao:
                     self.gdejestao[pravilo]=[]
                 self.gdejestao[pravilo].append([0,0,0])
+                izbaceni[pravilo]=izbaceni.get(pravilo,[-1]) 
+                izbaceni[pravilo][0]+=1#poveca brojac ukupnih "cvorova" jednog tipa za jedan
                 return self.parse(tokenList)
 
     
@@ -189,5 +198,43 @@ p = ParseText()
 
 print p.parse(tokenList)
 print p.gdejebio
+print p.gdejestao
+#izbaceni["pravilo"]=izbaceni.get("pravilo",[-1])[0]+1
+print izbaceni
+
+def merge(popeditems, key):
+    """It expects to be a continuous array of numbers
+        starting from 0(zero)"""
+    lista = []
+    i=0
+    gdejestao=deque(p.gdejestao[key])
+    print "Fdsfs"
+    print gdejestao
+    length = len(popeditems)+len(gdejestao)#3
+    while i<length:#ne moze plus jer ako nista nema toliko u vecoj listi
+        if popeditems and i==popeditems[0][0]:
+            print i
+            lista.append(popeditems[0][1])
+            del popeditems[0]
+        elif len(gdejestao)>0:
+            #lista.append(gdejestao.popleft())
+            lista.append(gdejestao[0])
+            del gdejestao[0]
+        i+=1
+            
+    return lista
+
+# p.gdejestao["operator"] = [1,3,5,6,7,8,9]
+# izbaceni=[[0,0],[2,2],[4,4],[10,10]]
+# print merge(izbaceni, "operator")
+
+        
+
+for k,v in izbaceni.iteritems():
+    if len(v)>1:
+        print k
+        #nadji u gde je bio i napravi novu listu, tj poubacuj izbacene elemen
+        p.gdejestao[k]=merge(v[1:],k)
+
 print p.gdejestao
 
