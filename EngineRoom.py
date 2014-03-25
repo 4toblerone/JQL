@@ -18,6 +18,13 @@ class Node:
     #ukoliko treba da predje na poslednje dete u listi vraca None, zasto?
     #verovatno neki slucaj (koji ne vidim trenutno) 
     #pri rekurziji nije pokriven
+
+    #da li da menjam str metodu tako da iskuljucuje ako je jedno dete i to token
+    #ili da leafnode-ovima dodam atribut token pa da dooperation vraca samo taj attribute 
+
+    #da li da uvedem LeafNode klasu koju ce svi leafnode-ovi nasledjivati i koja ce u odnosu
+    #na Node klasu imati samo dodat atribut za smestanje tokena i cija ce doooperation vracati 
+    #taj atribut? 
     def __str__(self):
         print "<"+self.__class__.__name__+">"
         if len(self.childrens)==0:
@@ -260,8 +267,15 @@ for k,v in izbaceni.iteritems():
 
 print p.gdejestao
 
+
+def createleaf(rule,tokenvalue):
+    leafnode = createnode(nodes[rule])
+    leafnode.add(tokenvalue)
+    return leafnode
+
 stack = [ExprNode()]
 prvi  = []
+index = -1
 #obrisi i iz gde je stao
 def createtree(key):
     rulenum = p.gdejestao[key][0][1]
@@ -274,7 +288,12 @@ def createtree(key):
 
         if pravilo not in grammar:
             #dodaj listi caletove dece novi cvor
-            stack[-1].add(createnode(nodes[pravilo]))
+            #dodaj token value ili ceo token(?)
+
+            #stack[-1].add(createnode(nodes[pravilo]))
+            global index
+            index+=1
+            stack[-1].add(createleaf(pravilo, tokenList[index] )) #pop prvi, i kopiraj listu tokena
             if index == len(grammar[key][rulenum])-1 and len(stack)>1:
                 #moze da se desi da ima samo jedan, obrati paznju
                 stack.pop()
@@ -298,13 +317,6 @@ def createtree(key):
             createtree(pravilo)
 
 
-print "fdsfasfsadfa"
-#print globals()
 createtree("expr")
-#createnode("MathOpNode")    
-print stack
-#print stack[0].childrens
-print prvi
-
 print "fsdfsdf",prvi[0].__str__()
-
+print index
