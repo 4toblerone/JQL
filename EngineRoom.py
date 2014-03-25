@@ -1,7 +1,7 @@
 from Lexer import Lexer
 from collections import deque
 
-class Node:
+class Node(object):
     """docstring for Node"""
     def __init__(self):
         self.childrens=[]
@@ -25,6 +25,8 @@ class Node:
     #da li da uvedem LeafNode klasu koju ce svi leafnode-ovi nasledjivati i koja ce u odnosu
     #na Node klasu imati samo dodat atribut za smestanje tokena i cija ce doooperation vracati 
     #taj atribut? 
+
+    #Sta je los dizajn? 
     def __str__(self):
         print "<"+self.__class__.__name__+">"
         if len(self.childrens)==0:
@@ -32,6 +34,13 @@ class Node:
         for child in self.childrens:
             print child.__str__()
 
+class LeafNode(Node):
+    def __init__(self,token):
+        super(LeafNode,self).__init__()
+        self.token = token
+
+    def dooperation(self):
+        return self.token
 
 class ExprNode(Node):
     pass
@@ -53,9 +62,10 @@ class AttxNode(Node):
 class ConditionNode(Node):
     pass
 
-class NumberNode(Node):
-    def dooperation(self):
-        return self.childrens[0]
+class NumberNode(LeafNode):
+    # def dooperation(self):
+    #     return self.childrens[0]
+    pass
     
 
 class WordNode(Node):
@@ -66,7 +76,7 @@ class MathOpNode(Node):
         
 class OperatorNode(Node):
     pass
-class PlusNode(Node):
+class PlusNode(LeafNode):
     pass
 
 nodes={"expr" : "ExprNode", 
@@ -81,11 +91,14 @@ nodes={"expr" : "ExprNode",
         "operator" : "OperatorNode",
         "plus": "PlusNode"}
 
-def createnode(class_name):
+def createnode(class_name,*args):
     node_class = globals()[class_name]
-    instance = node_class()
+    instance = node_class(*args)
     return instance
 
+def createleaf(rule,tokenvalue):
+    leafnode = createnode(nodes[rule],tokenvalue)
+    return leafnode
 # grammar = {"expr":[["predicate","object" , "condition"],["object", "predicate", "condition"]],
 #             "predicate":[["select"],["insert"],["delete"],["replace"]],
 #             "object":[["word"],["number"]],
@@ -268,10 +281,7 @@ for k,v in izbaceni.iteritems():
 print p.gdejestao
 
 
-def createleaf(rule,tokenvalue):
-    leafnode = createnode(nodes[rule])
-    leafnode.add(tokenvalue)
-    return leafnode
+
 
 stack = [ExprNode()]
 prvi  = []
@@ -317,6 +327,8 @@ def createtree(key):
             createtree(pravilo)
 
 
-createtree("expr")
-print "fsdfsdf",prvi[0].__str__()
-print index
+# createtree("expr")
+# print "fsdfsdf",prvi[0].__str__()
+# print index
+
+print createleaf("number", tokenList[0]).dooperation()
