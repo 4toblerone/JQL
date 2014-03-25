@@ -14,6 +14,18 @@ class Node:
         """do operation on childrens, eval"""
         pass
 
+    #probaj generator!
+    #ukoliko treba da predje na poslednje dete u listi vraca None, zasto?
+    #verovatno neki slucaj (koji ne vidim trenutno) 
+    #pri rekurziji nije pokriven
+    def __str__(self):
+        print "<"+self.__class__.__name__+">"
+        if len(self.childrens)==0:
+            return "Nema vise dece ova grana"
+        for child in self.childrens:
+            print child.__str__()
+
+
 class ExprNode(Node):
     pass
 
@@ -35,7 +47,9 @@ class ConditionNode(Node):
     pass
 
 class NumberNode(Node):
-    pass
+    def dooperation(self):
+        return self.childrens[0]
+    
 
 class WordNode(Node):
     pass
@@ -78,7 +92,7 @@ grammar={"expr":[["mathop"]],
            "operator": [["plus"],["minus"]] }
 
 #tokenList = Lexer().breakDownStringToTokens("insert 7 all nesto nestooo bla bla bla 7 ")
-tokenList = Lexer().breakDownStringToTokens("7 + 7 + 7")
+tokenList = Lexer().breakDownStringToTokens("7 + 7 + 7 ")
 
 izbaceni={}
 
@@ -247,20 +261,21 @@ for k,v in izbaceni.iteritems():
 print p.gdejestao
 
 stack = [ExprNode()]
-prvi  = None
+prvi  = []
 #obrisi i iz gde je stao
 def createtree(key):
     rulenum = p.gdejestao[key][0][1]
     for index, pravilo in enumerate(grammar[key][rulenum]):
         # if index == len(grammar[key][rulenum])-1:
         #     stack.pop()
-        print "************"
-        print pravilo
-        print "************"
+        # print "************"
+        # print pravilo , stack
+        # print "************"
+
         if pravilo not in grammar:
             #dodaj listi caletove dece novi cvor
             stack[-1].add(createnode(nodes[pravilo]))
-            if index == len(grammar[key][rulenum])-1:
+            if index == len(grammar[key][rulenum])-1 and len(stack)>1:
                 #moze da se desi da ima samo jedan, obrati paznju
                 stack.pop()
                 del p.gdejestao[key][0]
@@ -273,8 +288,8 @@ def createtree(key):
             if index == len(grammar[key][rulenum])-1:
                 #moze da se desi da ima samo jedan, obrati paznju
                 if len(stack)==1:
-                    global prvi
-                    prvi =stack.pop()
+                    #global prvi
+                    prvi.append(stack.pop())
                 else:
                     stack.pop()
                 del p.gdejestao[key][0]
@@ -289,4 +304,7 @@ createtree("expr")
 #createnode("MathOpNode")    
 print stack
 #print stack[0].childrens
-print prvi, prvi.childrens[0].childrens
+print prvi
+
+print "fsdfsdf",prvi[0].__str__()
+
