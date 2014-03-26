@@ -245,6 +245,8 @@ print p.gdejestao
 #izbaceni["pravilo"]=izbaceni.get("pravilo",[-1])[0]+1
 print izbaceni
 
+#izmeni tako da p.gdejestao bude ulazni argument da ne bude tako tight coupled
+
 def merge(popeditems, key):
     """It expects to be a continuous array of numbers
         starting from 0(zero)"""
@@ -267,26 +269,17 @@ def merge(popeditems, key):
             
     return lista
 
-# p.gdejestao["operator"] = [1,3,5,6,7,8,9]
-# izbaceni=[[0,0],[2,2],[4,4],[10,10]]
-# print merge(izbaceni, "operator")
-
-        
-
-for k,v in izbaceni.iteritems():
-    if len(v)>1:
-        print k
-        #nadji u gde je bio i napravi novu listu, tj poubacuj izbacene elemen
-        p.gdejestao[k]=merge(v[1:],k)
+#sredi ovo da ne bude module exposed
+def mergeall():
+    for k,v in izbaceni.iteritems():
+        if len(v)>1:
+            print k
+            #nadji u gde je bio i napravi novu listu, tj poubacuj izbacene elemen
+            p.gdejestao[k]=merge(v[1:],k)
 
 print p.gdejestao
 
-
-
-
 #ovo treba u zasebnoj klasi, cini mi se da je bolje nego closure
-
-
 class AST(object):
     def __init__(self,tokenlist):
         self.stack = [ExprNode()]
@@ -320,8 +313,9 @@ class AST(object):
 
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
-
+mergeall()
 print p.gdejestao
 ast =  AST(tokenList)
 ast.createtree("expr")
+print ast.prvi[0]
 print ast.prvi[0].childrens[0].childrens[1].childrens[0].dooperation()
