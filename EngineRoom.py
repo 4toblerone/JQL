@@ -18,6 +18,7 @@ class Node(object):
     #ukoliko treba da predje na poslednje dete u listi vraca None, zasto?
     #verovatno neki slucaj (koji ne vidim trenutno) 
     #pri rekurziji nije pokriven
+    #Mora funkcija uvek da vrati nesto.
 
     #da li da menjam str metodu tako da iskuljucuje ako je jedno dete i to token
     #ili da leafnode-ovima dodam atribut token pa da dooperation vraca samo taj attribute 
@@ -33,7 +34,7 @@ class Node(object):
             return "Nema vise dece ova grana"
         for child in self.childrens:
             print child.__str__()
-
+        return "to"
 class LeafNode(Node):
     def __init__(self,token):
         super(LeafNode,self).__init__()
@@ -112,7 +113,7 @@ grammar={"expr":[["mathop"]],
            "operator": [["plus"],["minus"]] }
 
 #tokenList = Lexer().breakDownStringToTokens("insert 7 all nesto nestooo bla bla bla 7 ")
-tokenList = Lexer().breakDownStringToTokens("7 + 7 + 7 ")
+tokenList = Lexer().breakDownStringToTokens("7 + 7")
 
 izbaceni={}
 
@@ -283,52 +284,44 @@ print p.gdejestao
 
 
 
+#ovo treba u zasebnoj klasi, cini mi se da je bolje nego closure
+
 stack = [ExprNode()]
 prvi  = []
-index = -1
-#obrisi i iz gde je stao
+dek = deque(tokenList)
+
 def createtree(key):
     rulenum = p.gdejestao[key][0][1]
     for index, pravilo in enumerate(grammar[key][rulenum]):
-        # if index == len(grammar[key][rulenum])-1:
-        #     stack.pop()
-        # print "************"
-        # print pravilo , stack
-        # print "************"
-
         if pravilo not in grammar:
-            #dodaj listi caletove dece novi cvor
-            #dodaj token value ili ceo token(?)
-
             #stack[-1].add(createnode(nodes[pravilo]))
-            global index
+            global index 
             index+=1
-            stack[-1].add(createleaf(pravilo, tokenList[index] )) #pop prvi, i kopiraj listu tokena
+            stack[-1].add(createleaf(pravilo, dek.popleft() )) #pop prvi, i kopiraj listu tokena
             if index == len(grammar[key][rulenum])-1 and len(stack)>1:
-                #moze da se desi da ima samo jedan, obrati paznju
                 stack.pop()
                 del p.gdejestao[key][0]
-                #ovde je greska mora da nastavi a ne da izbaci
-            # return
         else:
             node = createnode(nodes[pravilo])
-            #print stack
             stack[-1].add(node)
             if index == len(grammar[key][rulenum])-1:
-                #moze da se desi da ima samo jedan, obrati paznju
                 if len(stack)==1:
-                    #global prvi
                     prvi.append(stack.pop())
                 else:
                     stack.pop()
                 del p.gdejestao[key][0]
-                #dodaj na cacu novog clana 
+
             stack.append(node)
             createtree(pravilo)
 
 
-# createtree("expr")
-# print "fsdfsdf",prvi[0].__str__()
-# print index
+createtree("expr")
+print prvi[0].childrens[0].childrens[0].dooperation()
+print prvi[0].__str__()
 
-print createleaf("number", tokenList[0]).dooperation()
+
+#print createleaf("number", tokenList[0]).dooperation()
+
+#u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
+#da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
+
