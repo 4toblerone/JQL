@@ -309,8 +309,6 @@ class AST(object):
                 self.stack.append(node)
                 self.createtree(pravilo)
 
-#print createleaf("number", tokenList[0]).dooperation()
-
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
 mergeall()
