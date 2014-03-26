@@ -286,42 +286,42 @@ print p.gdejestao
 
 #ovo treba u zasebnoj klasi, cini mi se da je bolje nego closure
 
-stack = [ExprNode()]
-prvi  = []
-dek = deque(tokenList)
 
-def createtree(key):
-    rulenum = p.gdejestao[key][0][1]
-    for index, pravilo in enumerate(grammar[key][rulenum]):
-        if pravilo not in grammar:
-            #stack[-1].add(createnode(nodes[pravilo]))
-            global index 
-            index+=1
-            stack[-1].add(createleaf(pravilo, dek.popleft() )) #pop prvi, i kopiraj listu tokena
-            if index == len(grammar[key][rulenum])-1 and len(stack)>1:
-                stack.pop()
-                del p.gdejestao[key][0]
-        else:
-            node = createnode(nodes[pravilo])
-            stack[-1].add(node)
-            if index == len(grammar[key][rulenum])-1:
-                if len(stack)==1:
-                    prvi.append(stack.pop())
-                else:
-                    stack.pop()
-                del p.gdejestao[key][0]
+class AST(object):
+    def __init__(self,tokenlist):
+        self.stack = [ExprNode()]
+        self.prvi  = []
+        self.dek = deque(tokenlist)
+        print "stao stao stao je je je", p.gdejestao
 
-            stack.append(node)
-            createtree(pravilo)
+    def createtree(self,key):
+        rulenum = p.gdejestao[key][0][1]
+        for index, pravilo in enumerate(grammar[key][rulenum]):
+            if pravilo not in grammar:
+                #stack[-1].add(createnode(nodes[pravilo]))
+                self.stack[-1].add(createleaf(pravilo, self.dek.popleft() )) #pop prvi, i kopiraj listu tokena
+                if index == len(grammar[key][rulenum])-1 and len(self.stack)>1:
+                    self.stack.pop()
+                    del p.gdejestao[key][0]
+            else:
+                node = createnode(nodes[pravilo])
+                self.stack[-1].add(node)
+                if index == len(grammar[key][rulenum])-1:
+                    if len(self.stack)==1:
+                        self.prvi.append(self.stack.pop())
+                    else:
+                        self.stack.pop()
+                    del p.gdejestao[key][0]
 
-
-createtree("expr")
-print prvi[0].childrens[0].childrens[0].dooperation()
-print prvi[0].__str__()
-
+                self.stack.append(node)
+                self.createtree(pravilo)
 
 #print createleaf("number", tokenList[0]).dooperation()
 
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
 
+print p.gdejestao
+ast =  AST(tokenList)
+ast.createtree("expr")
+print ast.prvi[0].childrens[0].childrens[1].childrens[0].dooperation()
