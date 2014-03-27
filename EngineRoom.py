@@ -237,83 +237,104 @@ class ParseText:
                 return self.parse(tokenList)
 
     
-p = ParseText()
+#p = ParseText()
 
-print p.parse(tokenList)
-print p.gdejebio
-print p.gdejestao
-#izbaceni["pravilo"]=izbaceni.get("pravilo",[-1])[0]+1
-print izbaceni
+# print p.parse(tokenList)
+# print p.gdejebio
+# print p.gdejestao
+# #izbaceni["pravilo"]=izbaceni.get("pravilo",[-1])[0]+1
+# print izbaceni
 
 #izmeni tako da p.gdejestao bude ulazni argument da ne bude tako tight coupled
 
-def merge(popeditems, key):
-    """It expects to be a continuous array of numbers
-        starting from 0(zero)"""
-    lista = []
-    i=0
-    gdejestao=deque(p.gdejestao[key])
-    print "Fdsfs"
-    print gdejestao
-    length = len(popeditems)+len(gdejestao)#3
-    while i<length:#ne moze plus jer ako nista nema toliko u vecoj listi
-        if popeditems and i==popeditems[0][0]:
-            print i
-            lista.append(popeditems[0][1])
-            del popeditems[0]
-        elif len(gdejestao)>0:
-            #lista.append(gdejestao.popleft())
-            lista.append(gdejestao[0])
-            del gdejestao[0]
-        i+=1
-            
-    return lista
-
+# def merge(popeditems, key, gdejestao):
+#     """It expects to be a continuous array of numbers
+#         starting from 0(zero)"""
+#     lista = []
+#     i=0
+#     gdejestaodeo=deque(gdejestao[key])
+#     print "Fdsfs"
+#     print gdejestaodeo
+#     length = len(popeditems)+len(gdejestaodeo)#3
+#     while i<length:#ne moze plus jer ako nista nema toliko u vecoj listi
+#         if popeditems and i==popeditems[0][0]:
+#             print i
+#             lista.append(popeditems[0][1])
+#             del popeditems[0]
+#         elif len(gdejestaodeo)>0:
+#             #lista.append(gdejestao.popleft())
+#             lista.append(gdejestaodeo[0])
+#             del gdejestaodeo[0]
+#         i+=1
+#     return lista
+#sta su popeditems a sta izbaceni?
 #sredi ovo da ne bude module exposed
-def mergeall():
-    for k,v in izbaceni.iteritems():
-        if len(v)>1:
-            print k
-            #nadji u gde je bio i napravi novu listu, tj poubacuj izbacene elemen
-            p.gdejestao[k]=merge(v[1:],k)
-
-print p.gdejestao
+def mergeall(izbaceni, gdejestao):
+    def merge(popeditems, key, gdejestao):
+        lista = []
+        i=0
+        gdejestaodeo=deque(gdejestao[key])
+        print "Fdsfs"
+        print gdejestaodeo
+        length = len(popeditems)+len(gdejestaodeo)#3
+        while i<length:#ne moze plus jer ako nista nema toliko u vecoj listi
+            if popeditems and i==popeditems[0][0]:
+                print i
+                lista.append(popeditems[0][1])
+                del popeditems[0]
+            elif len(gdejestaodeo)>0:
+                #lista.append(gdejestao.popleft())
+                lista.append(gdejestaodeo[0])
+                del gdejestaodeo[0]
+            i+=1
+        return lista
+    for key,value in izbaceni.iteritems():
+        if len(value)>1:
+            gdejestao[key]=merge(value[1:],key,gdejestao)
+    return gdejestao
+#print p.gdejestao
 
 #ovo treba u zasebnoj klasi, cini mi se da je bolje nego closure
+#promeni imena atributa, daj nesto smisleno, prvi i stack nisu bas
+#p.gdejestao i trace , pogledaj razlike tj da li ih ima
 class AST(object):
-    def __init__(self,tokenlist):
+
+    def __init__(self,tokenlist,trace):
         self.stack = [ExprNode()]
-        self.prvi  = []
+        self.stack2  = []
         self.dek = deque(tokenlist)
-        print "stao stao stao je je je", p.gdejestao
+        self.trace = trace
 
     def createtree(self,key):
-        rulenum = p.gdejestao[key][0][1]
+        rulenum = self.trace[key][0][1]
         for index, pravilo in enumerate(grammar[key][rulenum]):
             if pravilo not in grammar:
                 #stack[-1].add(createnode(nodes[pravilo]))
-                self.stack[-1].add(createleaf(pravilo, self.dek.popleft() )) #pop prvi, i kopiraj listu tokena
+                self.stack[-1].add(createleaf(pravilo, self.dek.popleft() )) #pop stack2, i kopiraj listu tokena
                 if index == len(grammar[key][rulenum])-1 and len(self.stack)>1:
                     self.stack.pop()
-                    del p.gdejestao[key][0]
+                    del self.trace[key][0]
             else:
                 node = createnode(nodes[pravilo])
                 self.stack[-1].add(node)
                 if index == len(grammar[key][rulenum])-1:
                     if len(self.stack)==1:
-                        self.prvi.append(self.stack.pop())
+                        self.stack2.append(self.stack.pop())
                     else:
                         self.stack.pop()
-                    del p.gdejestao[key][0]
+                    del self.trace[key][0]
 
                 self.stack.append(node)
                 self.createtree(pravilo)
 
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
-mergeall()
-print p.gdejestao
-ast =  AST(tokenList)
+# mergeall(izbaceni,p.gdejestao)
+# p.gdejestao = mergeall(izbaceni, p.gdejestao)
+# print p.gdejestao
+p = ParseText()
+p.parse(tokenList)
+ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
 ast.createtree("expr")
-print ast.prvi[0]
-print ast.prvi[0].childrens[0].childrens[1].childrens[0].dooperation()
+print ast.stack2[0]
+print ast.stack2[0].childrens[0].childrens[1].childrens[0].dooperation()
