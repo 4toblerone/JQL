@@ -46,33 +46,57 @@ class LeafNode(Node):
 class ExprNode(Node):
     pass
 
+class QueryNode(Node):
+    pass
+
+class RemoveExprNode(Node):
+    pass
+
+class AddExprNode(Node):
+    pass
+
+class UpdateExprNode(Node):
+    pass
+
+class GetExprNode(Node):
+    pass
+
+class WutNode(Node):
+    pass
 
 class ObjectNode(Node): 
     pass
 
-class PredicateNode(Node):
-    pass
-
-
-class AttributeNode(Node):
-    pass
-
-class AttxNode(Node):
-    pass
-
 class ConditionNode(Node):
+    pass
+
+class BasicConditionNode(Node):
+    pass
+
+class ValueNode(Node):
+    pass
+
+class JsonStringNode(Node):
+    pass
+
+class MathExprNode(Node):
+    pass
+
+class StringExprNode(Node):
+    pass
+
+class MathOpNode(Node):
     pass
 
 class NumberNode(LeafNode):
     # def dooperation(self):
     #     return self.childrens[0]
     pass
-    
 
-class WordNode(Node):
+class ComparisonOpNode(Node):
     pass
-
-class MathOpNode(Node):
+    
+class WordNode(Node):
     pass
         
 class OperatorNode(Node):
@@ -83,17 +107,31 @@ class OperatorNode(Node):
 class PlusNode(LeafNode):
     pass
 
+class MinusNode(LeafNode):
+    pass
+
 nodes={"expr" : "ExprNode", 
-        "predicate": "PredicateNode",
+        "queryexpr" : "QueryNode",
+        "removeexpr" : "RemoveExprNode",
+        "addexpr" : "AddExprNode",
+        "updateexpr" : "UpdateExprNode",
+        "getexpr" : "GetExprNode",
+        "wut" : "WutNode",
         "object": "ObjectNode",
         "condition": "ConditionNode",
-        "attribute": "AttributeNode",
-        "attx": "AttxNode",
+        "basiccondition" : "BasicConditionNode",
+        "value" : "ValueNode",
+        "jsonstring" : "JsonStringNode",
+        "mathexpr" : "MathExprNode",
+        "stringexpr" : "StringExprNode",
+        "comparisonop" : "ComparisonOpNode",
         "word": "WordNode",
         "number":"NumberNode",
-        "mathop":"MathOpNode",
+        
         "operator" : "OperatorNode",
-        "plus": "PlusNode"}
+        "plus": "PlusNode",
+        "minus": "MinusNode"
+        }
 
 def createnode(class_name,*args):
     node_class = globals()[class_name]
@@ -113,23 +151,26 @@ def createleaf(rule,tokenvalue):
 
 grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],
         "queryexpr" : [["removeexpr"],["addexpr"],["updateexpr"],["getexpr"]],
-        "remoeexpr" : [["from", "wut", "remove" , "object"]],
+        "removeexpr" : [["from", "wut", "remove" , "object"]],
         "getexpr" : [["from","object","get","wut"]],
         "addexpr" : [["to","object","add","jsonstring_start","jsonstring","jsonstring_end"]],
         "updateexpr" : [["update" , "wut", "to" , "value"]],
         "object" : [["word","arrow","object"], ["word"]],
         "condition" : [["basiccondition", "and","condition"], ["basiccondition"]],
-        "basiccondition" : [["object", "2xequal","value"]],
+        "basiccondition" : [["object", "comparisonop","value"]],
         "value" : [["word"],["number"]],
-        "wut" : [["object", "where", "condition"], ["object"]]
+        "wut" : [["object", "where", "condition"], ["object"]],
+        "comparisonop" : [["2xequal"],["lessorequal"],["greaterorequal"]],
+        "mathexpr" : [["number", "operator", "mathexpr"], ["number"]],
+        "stringexpr" : [[]]
         }
 
-grammar={"expr":[["mathop"]],
-           "mathop":[["number", "operator" , "mathop"] , ["number"]],
-           "operator": [["plus"],["minus"]] }
+# grammar={"expr":[["mathop"]],
+#            "mathop":[["number", "operator" , "mathop"] , ["number"]],
+#            "operator": [["plus"],["minus"]] }
 
 #tokenList = Lexer().breakDownStringToTokens("insert 7 all nesto nestooo bla bla bla 7 ")
-tokenList = Lexer().breakDownStringToTokens("7 + 7")
+tokenList = Lexer().breakDownStringToTokens(" from nekiobjekat->deteobjekta remove unuce")
 
 izbaceni={}
 
@@ -322,10 +363,10 @@ class AST(object):
 # p.gdejestao = mergeall(izbaceni, p.gdejestao)
 # print p.gdejestao
 p = ParseText()
-p.parse(tokenList)
-ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
-ast.createtree("expr")
-print ast.stack2[0]
-print ast.stack2[0].childrens[0].childrens[1].childrens[0].dooperation()
-print ast.stack2[0].childrens[0].childrens[1].dooperation()
+print p.parse(tokenList)
+# ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
+# ast.createtree("expr")
+# print ast.stack2[0]
+# print ast.stack2[0].childrens[0].childrens[1].childrens[0].dooperation()
+# print ast.stack2[0].childrens[0].childrens[1].dooperation()
 #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation

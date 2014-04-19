@@ -44,6 +44,18 @@ def t_EXCLAMATIONEQUAL(token):
     r'!='
     return token
 
+def t_LESSOREQUAL(token):
+  r'<='
+  return token
+
+def t_EQUALORGREATER(token):
+  r'=>'
+  return token
+
+def t_2XEQUAL(token):
+    r'=='
+    return token
+
 def t_EQUAL(token):
     r'='
     return token
@@ -52,9 +64,14 @@ def t_EXCLAMATION(token):
     r'!'
     return token
 
-def t_2XEQUAL(token):
-    r'=='
-    return token
+
+def t_REMOVE(token):
+  r'remove'
+  return token
+
+def t_FROM(token):
+  r'from'
+  return token
 
 
 
@@ -78,6 +95,10 @@ def t_NUMBER(token):
 def t_WHITESPACES(token):
     r'" "'
     pass
+
+def t_ARROW(token):
+    r'->'
+    return token
 
 def t_error(t):
     print 'Illegal character'
@@ -108,6 +129,11 @@ tokens = [
           'WHITESPACES',
           'JSONSTRING_START',
           'JSONSTRING_END',
-          'JSONSTRING'
+          'JSONSTRING',
+          'ARROW',
+          'LESSOREQUAL',
+          'EQUALORGREATER',
+          'REMOVE',
+          'FROM'
           ] + list(predicate.values())
 
