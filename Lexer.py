@@ -24,5 +24,5 @@ class Lexer(object):
         """for sometoken in tokenList:
             print sometoken.type """        
 
-#proba = Lexer()        
-#print proba.breakDownStringToTokens("1 select dele +")
+proba = Lexer()        
+print proba.breakDownStringToTokens("1 select dele ' neki string' fdsa")

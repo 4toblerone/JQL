@@ -76,7 +76,10 @@ class MathOpNode(Node):
     pass
         
 class OperatorNode(Node):
+    def dooperation(self):
+        return self.childrens[0].dooperation()
     pass
+
 class PlusNode(LeafNode):
     pass
 
@@ -107,6 +110,19 @@ def createleaf(rule,tokenvalue):
 #             "attribute":[["word","attx"],["attx", "number"]],
 #             "attx":[["word","word"],["word", "number"]],
 #             }
+
+grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],
+        "queryexpr" : [["removeexpr"],["addexpr"],["updateexpr"],["getexpr"]],
+        "remoeexpr" : [["from", "wut", "remove" , "object"]],
+        "getexpr" : [["from","object","get","wut"]],
+        "addexpr" : [["to","object","add","jsonstring_start","jsonstring","jsonstring_end"]],
+        "updateexpr" : [["update" , "wut", "to" , "value"]],
+        "object" : [["word","arrow","object"], ["word"]],
+        "condition" : [["basiccondition", "and","condition"], ["basiccondition"]],
+        "basiccondition" : [["object", "2xequal","value"]],
+        "value" : [["word"],["number"]],
+        "wut" : [["object", "where", "condition"], ["object"]]
+        }
 
 grammar={"expr":[["mathop"]],
            "mathop":[["number", "operator" , "mathop"] , ["number"]],
@@ -236,46 +252,14 @@ class ParseText:
                 izbaceni[pravilo][0]+=1#poveca brojac ukupnih "cvorova" jednog tipa za jedan
                 return self.parse(tokenList)
 
-    
-#p = ParseText()
 
-# print p.parse(tokenList)
-# print p.gdejebio
-# print p.gdejestao
-# #izbaceni["pravilo"]=izbaceni.get("pravilo",[-1])[0]+1
-# print izbaceni
-
-#izmeni tako da p.gdejestao bude ulazni argument da ne bude tako tight coupled
-
-# def merge(popeditems, key, gdejestao):
-#     """It expects to be a continuous array of numbers
-#         starting from 0(zero)"""
-#     lista = []
-#     i=0
-#     gdejestaodeo=deque(gdejestao[key])
-#     print "Fdsfs"
-#     print gdejestaodeo
-#     length = len(popeditems)+len(gdejestaodeo)#3
-#     while i<length:#ne moze plus jer ako nista nema toliko u vecoj listi
-#         if popeditems and i==popeditems[0][0]:
-#             print i
-#             lista.append(popeditems[0][1])
-#             del popeditems[0]
-#         elif len(gdejestaodeo)>0:
-#             #lista.append(gdejestao.popleft())
-#             lista.append(gdejestaodeo[0])
-#             del gdejestaodeo[0]
-#         i+=1
-#     return lista
-#sta su popeditems a sta izbaceni?
-#sredi ovo da ne bude module exposed
 def mergeall(izbaceni, gdejestao):
-    def merge(popeditems, key, gdejestao):
+
+    def merge(popeditems, key):
+        
         lista = []
         i=0
         gdejestaodeo=deque(gdejestao[key])
-        print "Fdsfs"
-        print gdejestaodeo
         length = len(popeditems)+len(gdejestaodeo)#3
         while i<length:#ne moze plus jer ako nista nema toliko u vecoj listi
             if popeditems and i==popeditems[0][0]:
@@ -283,14 +267,14 @@ def mergeall(izbaceni, gdejestao):
                 lista.append(popeditems[0][1])
                 del popeditems[0]
             elif len(gdejestaodeo)>0:
-                #lista.append(gdejestao.popleft())
                 lista.append(gdejestaodeo[0])
                 del gdejestaodeo[0]
             i+=1
         return lista
+    
     for key,value in izbaceni.iteritems():
         if len(value)>1:
-            gdejestao[key]=merge(value[1:],key,gdejestao)
+            gdejestao[key]=merge(value[1:],key)
     return gdejestao
 #print p.gdejestao
 
@@ -310,6 +294,11 @@ class AST(object):
         for index, pravilo in enumerate(grammar[key][rulenum]):
             if pravilo not in grammar:
                 #stack[-1].add(createnode(nodes[pravilo]))
+                #dynamicly create leafNodes which are not in the nodes dict
+                #example the word "for" has no real value inside queryexpr 
+                #or maybe it is better no to have it at all as a node?
+                #if it isn't in nodes just skip it
+                #make sure that nodes contains 
                 self.stack[-1].add(createleaf(pravilo, self.dek.popleft() )) #pop stack2, i kopiraj listu tokena
                 if index == len(grammar[key][rulenum])-1 and len(self.stack)>1:
                     self.stack.pop()
@@ -338,3 +327,5 @@ ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
 ast.createtree("expr")
 print ast.stack2[0]
 print ast.stack2[0].childrens[0].childrens[1].childrens[0].dooperation()
+print ast.stack2[0].childrens[0].childrens[1].dooperation()
+#napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation

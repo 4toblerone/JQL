@@ -8,12 +8,33 @@ predicate = {
   "replace" : "REPLACE"
 }
 
+states= (("JSONSTRING","exclusive"),)
+
 t_PLUS = r'\+'
 t_MINUS = r'-'
 t_TIMES = r'\*'
 t_DIVIDE = r'/'
 
+def t_start_jsonstring(token):
+   r"[uU]?[rR]?'"
+   token.lexer.push_state("JSONSTRING")
+   token.type = "JSONSTRING_START"
+   if "r" in token.value or "R" in token.value:
+      token.lexer.is_raw = True
+   token.value = token.value.split("'", 1)[0]
+   return token
 
+def t_JSONSTRING_simple(token):
+    r"[^'\\\n]+"
+    token.type = "JSONSTRING"
+    return token
+
+def t_JSONSTRING_end(token):
+    r"'"
+    token.type = "JSONSTRING_END"
+    token.lexer.pop_state()
+    token.lexer.is_raw = False
+    return token
 
 def t_COMMA(token):
     r','
@@ -84,6 +105,9 @@ tokens = [
           'STRING',
           'WORD',
           'NUMBER',
-          'WHITESPACES'
+          'WHITESPACES',
+          'JSONSTRING_START',
+          'JSONSTRING_END',
+          'JSONSTRING'
           ] + list(predicate.values())
 
