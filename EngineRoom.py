@@ -85,23 +85,18 @@ class MathExprNode(Node):
 class StringExprNode(Node):
     pass
 
-class MathOpNode(Node):
-    pass
-
-class NumberNode(LeafNode):
-    # def dooperation(self):
-    #     return self.childrens[0]
-    pass
-
 class ComparisonOpNode(Node):
     pass
     
-class WordNode(Node):
+class WordNode(LeafNode):
     pass
         
 class OperatorNode(Node):
     def dooperation(self):
         return self.childrens[0].dooperation()
+    pass
+
+class NumberNode(LeafNode):
     pass
 
 class PlusNode(LeafNode):
@@ -333,29 +328,31 @@ class AST(object):
     def createtree(self,key):
         rulenum = self.trace[key][0][1]
         for index, pravilo in enumerate(grammar[key][rulenum]):
-            if pravilo not in grammar:
+            if pravilo in nodes:
+                if pravilo not in grammar:
                 #stack[-1].add(createnode(nodes[pravilo]))
                 #dynamicly create leafNodes which are not in the nodes dict
                 #example the word "for" has no real value inside queryexpr 
                 #or maybe it is better no to have it at all as a node?
                 #if it isn't in nodes just skip it
                 #make sure that nodes contains 
-                self.stack[-1].add(createleaf(pravilo, self.dek.popleft() )) #pop stack2, i kopiraj listu tokena
-                if index == len(grammar[key][rulenum])-1 and len(self.stack)>1:
-                    self.stack.pop()
-                    del self.trace[key][0]
-            else:
-                node = createnode(nodes[pravilo])
-                self.stack[-1].add(node)
-                if index == len(grammar[key][rulenum])-1:
-                    if len(self.stack)==1:
-                        self.stack2.append(self.stack.pop())
-                    else:
+                    self.stack[-1].add(createleaf(pravilo, self.dek.popleft() )) #pop stack2, i kopiraj listu tokena
+                    if index == len(grammar[key][rulenum])-1 and len(self.stack)>1:
                         self.stack.pop()
-                    del self.trace[key][0]
+                        del self.trace[key][0]
+                else:
+                    print"yo",pravilo
+                    node = createnode(nodes[pravilo])
+                    self.stack[-1].add(node)
+                    if index == len(grammar[key][rulenum])-1:
+                        if len(self.stack)==1:
+                            self.stack2.append(self.stack.pop())
+                        else:
+                            self.stack.pop()
+                        del self.trace[key][0]
 
-                self.stack.append(node)
-                self.createtree(pravilo)
+                    self.stack.append(node)
+                    self.createtree(pravilo)
 
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
@@ -364,9 +361,12 @@ class AST(object):
 # print p.gdejestao
 p = ParseText()
 print p.parse(tokenList)
-# ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
-# ast.createtree("expr")
-# print ast.stack2[0]
-# print ast.stack2[0].childrens[0].childrens[1].childrens[0].dooperation()
+print nodes['number']
+print globals()[nodes['number']]
+#createnode("number", "probica")
+ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
+ast.createtree("expr")
+print ast.stack2[0]
+print ast.stack2[0].childrens[0].childrens[1]
 # print ast.stack2[0].childrens[0].childrens[1].dooperation()
 #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
