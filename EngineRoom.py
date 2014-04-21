@@ -1,5 +1,6 @@
 from Lexer import Lexer
 from collections import deque, Iterable
+import operator
 
 class Node(object):
     """docstring for Node"""
@@ -95,7 +96,22 @@ class StringExprNode(Node):
 
 class ComparisonOpNode(Node):
     pass
+
+class TwoEqualOpNode(LeafNode):
+
+    def dooperation(self):
+        return operator.eq
     
+class LessOrEqualNode(LeafNode):
+
+    def dooperation(self):
+        return operator.le
+
+class EqualOrGreaterNode(LeafNode):
+
+    def dooperation(self):
+        return operator.ge
+
 class WordNode(LeafNode):
     
     def dooperation(self):
@@ -112,10 +128,24 @@ class NumberNode(LeafNode):
         return self.childrens[0].value
 
 class PlusNode(LeafNode):
-    pass
+   
+    def dooperation(self):
+        return operator.add
 
 class MinusNode(LeafNode):
-    pass
+    
+    def dooperation(self):
+        return operator.sub
+
+class TimesNode(LeafNode):
+
+    def dooperation(self):
+        return operator.mul
+
+class DivideNode(LeafNode):
+
+    def dooperation(self):
+        return operator.div
 
 def flatten(listl):
         for element in listl:
@@ -125,6 +155,14 @@ def flatten(listl):
             else:
                 yield element
 
+def createnode(class_name,*args):
+    node_class = globals()[class_name]
+    instance = node_class(*args)
+    return instance
+
+def createleaf(rule,tokenvalue):
+    leafnode = createnode(nodes[rule],tokenvalue)
+    return leafnode
 
 nodes={"expr" : "ExprNode", 
         "queryexpr" : "QueryNode",
@@ -149,22 +187,6 @@ nodes={"expr" : "ExprNode",
         "minus": "MinusNode"
         }
 
-def createnode(class_name,*args):
-    node_class = globals()[class_name]
-    instance = node_class(*args)
-    return instance
-
-def createleaf(rule,tokenvalue):
-    leafnode = createnode(nodes[rule],tokenvalue)
-    return leafnode
-# grammar = {"expr":[["predicate","object" , "condition"],["object", "predicate", "condition"]],
-#             "predicate":[["select"],["insert"],["delete"],["replace"]],
-#             "object":[["word"],["number"]],
-#             "condition":[["attribute" , "word" , "attribute"]],
-#             "attribute":[["word","attx"],["attx", "number"]],
-#             "attx":[["word","word"],["word", "number"]],
-#             }
-
 grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need for "cushion" rule for some reasone parser wont parserwont parse it directly
         "queryexpr" : [["removeexpr"],["addexpr"],["updateexpr"],["getexpr"]],
         "removeexpr" : [["object"]],#[["from", "wut", "remove" , "object"]],
@@ -178,6 +200,7 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need
         "wut" : [["object", "where", "condition"], ["object"]],
         "comparisonop" : [["2xequal"],["lessorequal"],["greaterorequal"]],
         "mathexpr" : [["number", "operator", "mathexpr"], ["number"]],
+        "operator" : [["plus"],["minus"],["times"],["divide"]],
         "stringexpr" : [[]]
         }
 
@@ -185,7 +208,6 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need
 #            "mathop":[["number", "operator" , "mathop"] , ["number"]],
 #            "operator": [["plus"],["minus"]] }
 
-#tokenList = Lexer().breakDownStringToTokens("insert 7 all nesto nestooo bla bla bla 7 ")
 tokenList = Lexer().breakDownStringToTokens("nekiobjekat->deteobjekta->unuceobjekta")
 
 izbaceni={}

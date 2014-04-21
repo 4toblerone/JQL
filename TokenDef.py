@@ -100,6 +100,7 @@ def t_ARROW(token):
     r'->'
     return token
 
+
 def t_error(t):
     print 'Illegal character'
     t.lexer.skip(1)
