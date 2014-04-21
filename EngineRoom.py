@@ -1,5 +1,5 @@
 from Lexer import Lexer
-from collections import deque
+from collections import deque, Iterable
 
 class Node(object):
     """docstring for Node"""
@@ -13,6 +13,7 @@ class Node(object):
     def dooperation(self):
         """do operation on childrens, eval"""
         pass
+
 
     #probaj generator!
     #ukoliko treba da predje na poslednje dete u listi vraca None, zasto?
@@ -44,13 +45,16 @@ class LeafNode(Node):
         return self.token
 
 class ExprNode(Node):
-    pass
+    def dooperation(self):
+        return self.childrens[0].dooperation()
 
 class QueryNode(Node):
-    pass
+    def dooperation(self):
+        return self.childrens[0].dooperation()
 
 class RemoveExprNode(Node):
-    pass
+    def dooperation(self):
+        return self.childrens[0].dooperation()
 
 class AddExprNode(Node):
     pass
@@ -65,7 +69,11 @@ class WutNode(Node):
     pass
 
 class ObjectNode(Node): 
-    pass
+    def dooperation(self):
+        lista = []
+        for child in self.childrens:
+            lista.append(child.dooperation())
+        return list(flatten(lista))
 
 class ConditionNode(Node):
     pass
@@ -89,21 +97,34 @@ class ComparisonOpNode(Node):
     pass
     
 class WordNode(LeafNode):
-    pass
+    
+    def dooperation(self):
+        return self.token.value
         
 class OperatorNode(Node):
+    
     def dooperation(self):
         return self.childrens[0].dooperation()
-    pass
 
 class NumberNode(LeafNode):
-    pass
+    
+    def dooperation(self):
+        return self.childrens[0].value
 
 class PlusNode(LeafNode):
     pass
 
 class MinusNode(LeafNode):
     pass
+
+def flatten(listl):
+        for element in listl:
+            if isinstance(element, Iterable) and not isinstance(element,basestring):
+                for sub in flatten(element):
+                    yield sub
+            else:
+                yield element
+
 
 nodes={"expr" : "ExprNode", 
         "queryexpr" : "QueryNode",
@@ -144,9 +165,9 @@ def createleaf(rule,tokenvalue):
 #             "attx":[["word","word"],["word", "number"]],
 #             }
 
-grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],
+grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need for "cushion" rule for some reasone parser wont parserwont parse it directly
         "queryexpr" : [["removeexpr"],["addexpr"],["updateexpr"],["getexpr"]],
-        "removeexpr" : [["from", "wut", "remove" , "object"]],
+        "removeexpr" : [["object"]],#[["from", "wut", "remove" , "object"]],
         "getexpr" : [["from","object","get","wut"]],
         "addexpr" : [["to","object","add","jsonstring_start","jsonstring","jsonstring_end"]],
         "updateexpr" : [["update" , "wut", "to" , "value"]],
@@ -165,7 +186,7 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],
 #            "operator": [["plus"],["minus"]] }
 
 #tokenList = Lexer().breakDownStringToTokens("insert 7 all nesto nestooo bla bla bla 7 ")
-tokenList = Lexer().breakDownStringToTokens(" from nekiobjekat->deteobjekta remove unuce")
+tokenList = Lexer().breakDownStringToTokens("nekiobjekat->deteobjekta->unuceobjekta")
 
 izbaceni={}
 
@@ -327,8 +348,11 @@ class AST(object):
 
     def createtree(self,key):
         rulenum = self.trace[key][0][1]
+        #print "createit", grammar[key][rulenum],rulenum
         for index, pravilo in enumerate(grammar[key][rulenum]):
+            #print "yooooooooooo",pravilo
             if pravilo in nodes:
+                #print pravilo,"usao ovdeee"
                 if pravilo not in grammar:
                 #stack[-1].add(createnode(nodes[pravilo]))
                 #dynamicly create leafNodes which are not in the nodes dict
@@ -336,12 +360,13 @@ class AST(object):
                 #or maybe it is better no to have it at all as a node?
                 #if it isn't in nodes just skip it
                 #make sure that nodes contains 
+                    print "dek" , self.dek
                     self.stack[-1].add(createleaf(pravilo, self.dek.popleft() )) #pop stack2, i kopiraj listu tokena
                     if index == len(grammar[key][rulenum])-1 and len(self.stack)>1:
                         self.stack.pop()
                         del self.trace[key][0]
                 else:
-                    print"yo",pravilo
+                    #print"yo",pravilo
                     node = createnode(nodes[pravilo])
                     self.stack[-1].add(node)
                     if index == len(grammar[key][rulenum])-1:
@@ -353,6 +378,8 @@ class AST(object):
 
                     self.stack.append(node)
                     self.createtree(pravilo)
+            else:
+                self.dek.popleft()
 
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
@@ -361,12 +388,11 @@ class AST(object):
 # print p.gdejestao
 p = ParseText()
 print p.parse(tokenList)
-print nodes['number']
-print globals()[nodes['number']]
-#createnode("number", "probica")
+# print nodes['number']
+# print globals()[nodes['number']]
+# #createnode("number", "probica")
 ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
 ast.createtree("expr")
-print ast.stack2[0]
-print ast.stack2[0].childrens[0].childrens[1]
+print ast.stack2[0].dooperation(),"printaj listu"
 # print ast.stack2[0].childrens[0].childrens[1].dooperation()
 #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
