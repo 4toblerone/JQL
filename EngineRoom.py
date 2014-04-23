@@ -85,7 +85,7 @@ class BasicConditionNode(Node):
 class ValueNode(Node):
     pass
 
-class JsonStringNode(Node):
+class JsonStringNode(LeafNode):
     pass
 
 class MathExprNode(Node):
@@ -95,9 +95,21 @@ class StringExprNode(Node):
     pass
 
 class ComparisonOpNode(Node):
-    pass
+    
+    def dooperation(self):
+        return self.childrens[0].dooperation()
 
-class TwoEqualOpNode(LeafNode):
+class LessNode(LeafNode):
+
+    def dooperation(self):
+        return operator.lt
+
+class GreaterNode(LeafNode):
+
+    def dooperation(self):
+        return operator.gt
+
+class TwoEqualNode(LeafNode):
 
     def dooperation(self):
         return operator.eq
@@ -164,6 +176,12 @@ def createleaf(rule,tokenvalue):
     leafnode = createnode(nodes[rule],tokenvalue)
     return leafnode
 
+def getjsonobject(paramlist, loaded_json_string):
+    """Returns json object, where paramlist is 'path' to it. 
+        If path to it is not valid a.k.a object doesn't exists
+        it will return None"""   
+    return reduce(dict.get,paramlist,loaded_json_string)
+
 nodes={"expr" : "ExprNode", 
         "queryexpr" : "QueryNode",
         "removeexpr" : "RemoveExprNode",
@@ -178,13 +196,22 @@ nodes={"expr" : "ExprNode",
         "jsonstring" : "JsonStringNode",
         "mathexpr" : "MathExprNode",
         "stringexpr" : "StringExprNode",
+        
         "comparisonop" : "ComparisonOpNode",
+        "less" : "LessNode",
+        "greater" : "GreaterNode",
+        "lessorequal" : "LessOrEqualNode",
+        "equalorgreater" : "EqualOrGreaterNode",
+        "twoequal" : "TwoEqualNode",
+
         "word": "WordNode",
         "number":"NumberNode",
         
         "operator" : "OperatorNode",
         "plus": "PlusNode",
-        "minus": "MinusNode"
+        "minus": "MinusNode",
+        "times" : "TimesNode",
+        "divide" : "DivideNode"
         }
 
 grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need for "cushion" rule for some reasone parser wont parserwont parse it directly
@@ -198,7 +225,7 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need
         "basiccondition" : [["object", "comparisonop","value"]],
         "value" : [["word"],["number"]],
         "wut" : [["object", "where", "condition"], ["object"]],
-        "comparisonop" : [["2xequal"],["lessorequal"],["greaterorequal"]],
+        "comparisonop" : [["less"],["greater"],["twoequal"],["lessorequal"],["greaterorequal"]],
         "mathexpr" : [["number", "operator", "mathexpr"], ["number"]],
         "operator" : [["plus"],["minus"],["times"],["divide"]],
         "stringexpr" : [[]]
@@ -210,7 +237,7 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need
 
 tokenList = Lexer().breakDownStringToTokens("nekiobjekat->deteobjekta->unuceobjekta")
 
-izbaceni={}
+izbaceni={} 
 
 print tokenList
 

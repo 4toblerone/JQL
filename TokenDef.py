@@ -44,6 +44,14 @@ def t_EXCLAMATIONEQUAL(token):
     r'!='
     return token
 
+def t_LESS(token):
+  r'<'
+  return token
+
+def t_GREATER(token):
+  r'>'
+  return token
+
 def t_LESSOREQUAL(token):
   r'<='
   return token
@@ -52,7 +60,7 @@ def t_EQUALORGREATER(token):
   r'=>'
   return token
 
-def t_2XEQUAL(token):
+def t_TWOEQUAL(token):
     r'=='
     return token
 
@@ -122,7 +130,7 @@ tokens = [
           'DOTCOMMA',
           'EQUAL',
           'EXCLAMATION',
-          '2XEQUAL',
+          'TWOEQUAL',
           'EXCLAMATIONEQUAL',
           'STRING',
           'WORD',
@@ -132,6 +140,8 @@ tokens = [
           'JSONSTRING_END',
           'JSONSTRING',
           'ARROW',
+          'LESS',
+          'GREATER',
           'LESSOREQUAL',
           'EQUALORGREATER',
           'REMOVE',
