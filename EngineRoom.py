@@ -1,6 +1,7 @@
 from Lexer import Lexer
 from collections import deque, Iterable
 import operator
+import json
 
 class Node(object):
     """docstring for Node"""
@@ -67,23 +68,46 @@ class GetExprNode(Node):
     pass
 
 class WutNode(Node):
-    pass
+    
+    def dooperation(self):
+
+        if len(self.childrens)>1:
+            jsonobject = getjsonobject(paramlist, loaded_json_string)
+        else:
+            pass
 
 class ObjectNode(Node): 
     def dooperation(self):
+        """Returns 'path' to the object as a list of keys"""
         lista = []
         for child in self.childrens:
             lista.append(child.dooperation())
         return list(flatten(lista))
 
 class ConditionNode(Node):
-    pass
+    
+    def dooperation(self):
+        listl=[]
+        for child in self.childrens:
+            listl.append(child.dooperation())
+        return listl
+    
 
 class BasicConditionNode(Node):
-    pass
+    
+    def dooperation(self):
+        """Returns tuple with key to objects child, comparison operator,
+            and value to witch it will be later compared to """
+        key = self.childrens[0].dooperation()
+        value = self.childrens[2].dooperation()
+        comparisonop = self.childrens[1].dooperation() 
+        return (key, comparisonop, value)
+
+
 
 class ValueNode(Node):
-    pass
+    def dooperation(self):
+        return self.childrens[0].value
 
 class JsonStringNode(LeafNode):
     pass
@@ -167,6 +191,17 @@ def flatten(listl):
             else:
                 yield element
 
+def flattenlistoftuples(listoftuples):
+    for element in listoftuples:
+            if isinstance(element, Iterable) and not isinstance(element,basestring) \
+                and not isinstance(element,tuple):
+                
+                for sub in flatten(element):
+                    yield sub
+            else:
+                yield element
+
+
 def createnode(class_name,*args):
     node_class = globals()[class_name]
     instance = node_class(*args)
@@ -176,11 +211,19 @@ def createleaf(rule,tokenvalue):
     leafnode = createnode(nodes[rule],tokenvalue)
     return leafnode
 
-def getjsonobject(paramlist, loaded_json_string):
+def getjsonobject(paramlist, loaded_json_string,conditions=None):
     """Returns json object, where paramlist is 'path' to it. 
         If path to it is not valid a.k.a object doesn't exists
         it will return None"""   
-    return reduce(dict.get,paramlist,loaded_json_string)
+    list_of_objects = reduce(dict.get,paramlist,loaded_json_string)
+
+    #create filter function which will evalute using by key and comparison operator
+    #from conditions
+        
+    return list_of_objects
+
+
+jsonstring='{"dict1":{"dict2":{"ime":"sale" , "titula" : "car"}}}'
 
 nodes={"expr" : "ExprNode", 
         "queryexpr" : "QueryNode",
