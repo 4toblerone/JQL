@@ -222,6 +222,23 @@ def getjsonobject(paramlist, loaded_json_string,conditions=None):
         
     return list_of_objects
 
+def checkallconditions():
+    #to use any or to use reduce which doesn't shortcircuit 
+    pass
+
+
+def filter(listtofilter):
+    pass
+
+def proba():
+    lista  = [1,2,3,6]
+    ops = [operator.le, operator.lt]
+    for x in lista:
+        for op in ops:
+            if op(x,3):
+                yield x
+
+
 
 jsonstring='{"dict1":{"dict2":{"ime":"sale" , "titula" : "car"}}}'
 
