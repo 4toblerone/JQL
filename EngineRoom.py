@@ -70,13 +70,16 @@ class GetExprNode(Node):
 class WutNode(Node):
     
     def dooperation(self):
-
-        if len(self.childrens)>1:
-            jsonobject = getjsonobject(paramlist, loaded_json_string)
-        else:
-            pass
+        path_to_object = self.childrens[0].dooperation()
+        try:
+            conditions = flattenlistoftuples(self.childrens[1])
+        except IndexError:
+            conditions=None
+        jsonobject = getjsonobject(path_to_object, jsonstring, conditions)
+        return jsonobject
 
 class ObjectNode(Node): 
+    
     def dooperation(self):
         """Returns 'path' to the object as a list of keys"""
         lista = []
@@ -106,6 +109,7 @@ class BasicConditionNode(Node):
 
 
 class ValueNode(Node):
+
     def dooperation(self):
         return self.childrens[0].value
 
@@ -211,36 +215,6 @@ def createleaf(rule,tokenvalue):
     leafnode = createnode(nodes[rule],tokenvalue)
     return leafnode
 
-def getjsonobject(paramlist, loaded_json_string,conditions=None):
-    """Returns json object, where paramlist is 'path' to it. 
-        If path to it is not valid a.k.a object doesn't exists
-        it will return None"""   
-    list_of_objects = reduce(dict.get,paramlist,loaded_json_string)
-
-    #create filter function which will evalute using by key and comparison operator
-    #from conditions
-        
-    return list_of_objects
-
-def checkallconditions():
-    #to use any or to use reduce which doesn't shortcircuit 
-    pass
-
-
-def filter(listtofilter):
-    pass
-
-def proba():
-    lista  = [1,2,3,6]
-    ops = [operator.le, operator.lt]
-    for x in lista:
-        for op in ops:
-            if op(x,3):
-                yield x
-
-
-
-jsonstring='{"dict1":{"dict2":{"ime":"sale" , "titula" : "car"}}}'
 
 nodes={"expr" : "ExprNode", 
         "queryexpr" : "QueryNode",
@@ -505,3 +479,31 @@ ast.createtree("expr")
 print ast.stack2[0].dooperation(),"printaj listu"
 # print ast.stack2[0].childrens[0].childrens[1].dooperation()
 #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
+
+def getjsonobject(paramlist, loaded_json_string,conditions=None):
+    """Returns json object, where paramlist is 'path' to it. 
+        If path to it is not valid a.k.a object doesn't exists
+        it will return None"""
+    jsonobject = reduce(dict.get,paramlist,loaded_json_string)
+    if conditions is not None:
+        result = []
+        for jo in jsonobject:
+            evaluated_conditions = [condition[1](getjsonobject(condition[0],jo),condition[2]) \
+                                    for condition in conditions]
+            if all(evaluated_conditions):
+                result.append(jo)
+        return result
+    else:
+        return jsonobject
+
+
+jsonstring='{"dit1":{"dit2":{"ime":"sale" , "titula" :[{"car":"gospodar","lastname":"univer"},{"car":"eee","lastname":"sveta"}]}}}'
+jsonstring1='{"sale":"car"}'
+print getjsonobject(["sale"], json.loads(jsonstring1)),"fdsdsfsdfsdfdsfsd"
+
+#jsonstring = '{"employees": [{ "firstName":"John" , "lastName":"Doe" }, { "firstName":"Anna" , "lastName":"Smith" },]}'
+conditions = [(["car"], operator.le ,"ee")]
+a = getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring),conditions)
+
+print a,"bravo"
+#print getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring), conditions) , "printaj"
