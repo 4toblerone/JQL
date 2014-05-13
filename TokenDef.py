@@ -81,6 +81,17 @@ def t_FROM(token):
   r'from'
   return token
 
+def t_GET(token):
+  r'get'
+  return token
+
+def t_WHERE(token):
+  r'where'
+  return token
+
+def t_AND(token):
+  r'and'
+  return token
 
 
 def t_STRING(t):
@@ -145,6 +156,9 @@ tokens = [
           'LESSOREQUAL',
           'EQUALORGREATER',
           'REMOVE',
-          'FROM'
+          'FROM',
+          'WHERE',
+          'GET',
+          'AND'
           ] + list(predicate.values())
 

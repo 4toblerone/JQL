@@ -65,11 +65,17 @@ class UpdateExprNode(Node):
     pass
 
 class GetExprNode(Node):
-    pass
+    
+    def dooperation(self):
+        path_to_object = self.childrens[0].dooperation()
+        from_object = getjsonobject(path_to_object, jsonstring)
+        result = self.childrens[1].dooperation(from_object)
+        return result
+
 
 class WutNode(Node):
     
-    def dooperation(self):
+    def dooperation(self,jsonstring):
         path_to_object = self.childrens[0].dooperation()
         try:
             conditions = flattenlistoftuples(self.childrens[1])
@@ -205,6 +211,21 @@ def flattenlistoftuples(listoftuples):
             else:
                 yield element
 
+def getjsonobject(paramlist, loaded_json_string,conditions=None):
+    """Returns json object, where paramlist is 'path' to it. 
+        If path to it is not valid a.k.a object doesn't exists
+        it will return None"""
+    jsonobject = reduce(dict.get,paramlist,loaded_json_string)
+    if conditions is not None:
+        result = []
+        for jo in jsonobject:
+            evaluated_conditions = [condition[1](getjsonobject(condition[0],jo),condition[2]) \
+                                    for condition in conditions]
+            if all(evaluated_conditions):
+                result.append(jo)
+        return result
+    else:
+        return jsonobject
 
 def createnode(class_name,*args):
     node_class = globals()[class_name]
@@ -248,28 +269,29 @@ nodes={"expr" : "ExprNode",
         "divide" : "DivideNode"
         }
 
-grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need for "cushion" rule for some reasone parser wont parserwont parse it directly
-        "queryexpr" : [["removeexpr"],["addexpr"],["updateexpr"],["getexpr"]],
-        "removeexpr" : [["object"]],#[["from", "wut", "remove" , "object"]],
-        "getexpr" : [["from","object","get","wut"]],
-        "addexpr" : [["to","object","add","jsonstring_start","jsonstring","jsonstring_end"]],
-        "updateexpr" : [["update" , "wut", "to" , "value"]],
-        "object" : [["word","arrow","object"], ["word"]],
-        "condition" : [["basiccondition", "and","condition"], ["basiccondition"]],
-        "basiccondition" : [["object", "comparisonop","value"]],
-        "value" : [["word"],["number"]],
-        "wut" : [["object", "where", "condition"], ["object"]],
-        "comparisonop" : [["less"],["greater"],["twoequal"],["lessorequal"],["greaterorequal"]],
-        "mathexpr" : [["number", "operator", "mathexpr"], ["number"]],
-        "operator" : [["plus"],["minus"],["times"],["divide"]],
-        "stringexpr" : [[]]
-        }
+# grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need for "cushion" rule for some reasone parser wont parserwont parse it directly
+#         "queryexpr" : [["removeexpr"],["addexpr"],["updateexpr"],["getexpr"]],
+#         "removeexpr" : [["from", "wut", "remove" , "object"]],
+#         "getexpr" : [["from","object","get","wut"]],
+#         "addexpr" : [["to","object","add","jsonstring_start","jsonstring","jsonstring_end"]],
+#         "updateexpr" : [["update" , "wut", "to" , "value"]],
+#         "object" : [["word","arrow","object"], ["word"]],
+#         "condition" : [["basiccondition", "and","condition"], ["basiccondition"]],
+#         "basiccondition" : [["object", "comparisonop","word"]],
+#         "value" : [["word"],["number"]],
+#         "wut" : [["object", "where", "basiccondition"], ["object"]],
+#         "comparisonop" : [["less"],["greater"],["twoequal"],["lessorequal"],["greaterorequal"]],
+#         "mathexpr" : [["number", "operator", "mathexpr"], ["number"]],
+#         "operator" : [["plus"],["minus"],["times"],["divide"]],
+#         "stringexpr" : [[]]
+#         }
 
-# grammar={"expr":[["mathop"]],
-#            "mathop":[["number", "operator" , "mathop"] , ["number"]],
-#            "operator": [["plus"],["minus"]] }
+grammar={"expr":[["mathop"]],
+           "andmathop":[["mathop","and","andmathop"],["mathop"]],
+           "mathop":[["number"]],
+           "operator": [["plus"],["minus"]] }
 
-tokenList = Lexer().breakDownStringToTokens("nekiobjekat->deteobjekta->unuceobjekta")
+tokenList = Lexer().breakDownStringToTokens(" 7")
 
 izbaceni={} 
 
@@ -286,11 +308,33 @@ class ParseText:
 
     def __init__(self):
         self.cacastack  = ['expr']
+        self.helperstack =[['expr',0]]
         self.gdejestao =  {'expr':[[0,0,0]]} #3. int sluzi za broja tokena tj da bi se znalo koliko unazad da se vrati u slucaju da ne naidje na odgvarajuce pravilo
                               #2. int oznacava odabrano prailo
                               #sta je 1. predjeno pravilo u ovom slucaju token , tj pomeraj u pravilo listi
         self.gdejebio=[createnode(nodes["expr"])]
         self.x=0
+
+
+    def addnewtohs(self,pravilo):
+        self.helperstack.append([pravilo,0])
+
+
+    def uphelperstack(self):
+        for upstairrule in self.helperstack:
+            upstairrule[1]+=1
+
+    def removefromhs(self):
+        tocut = self.helperstack[-1][1]
+        del self.helperstack[-1]
+        for upstairrule in self.helperstack:
+            upstairrule[1]-=tocut
+        #dodatak
+        return tocut
+
+
+    def deletelasths(self):
+        del self.helperstack[-1]
 
     #@resetfileds
     def parse(self,tokenList):
@@ -298,30 +342,72 @@ class ParseText:
         listapravila = grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
         #ovde provera da li je dosao i do kraja pravila
         if len(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:])==0: 
+            print "a"
             if len(self.cacastack)>1:
                 self.cacastack.pop()
                 return self.parse(tokenList)
             elif len(tokenList)>self.x:
+                print "nulto"
+                print self.cacastack, self.gdejestao, self.gdejebio
                 return False
 
+        #da li je presao sve tokene u listi, ako jeste 
         if self.x == len(tokenList):
+            print "b"
             if len(self.cacastack)==1 : 
+                # print listapravila, self.x , self.cacastack
+                print "gde je stao ", self.gdejestao
+                # print "gde je bio ", self.gdejebio
+                print "izbaceni", izbaceni
+
                 return True
-            else: 
+            else:
+                
+                print self.gdejestao[self.cacastack[-1]][-1][0] , len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1
+                if self.gdejestao[self.cacastack[-1]][-1][0]==len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1:
+                    print "e desi yooooooooooooooo"
+                    if len(self.cacastack)>1:
+                        #ne moze da se vrati skroz do kraja , tj moze samo do expr
+                        if len(self.gdejestao[self.cacastack[-1]])>1:
+                            poslednji = self.gdejestao[self.cacastack[-1]].pop()
+                            izbaceni[self.cacastack[-1]].append((izbaceni[self.cacastack[-1]][0],poslednji))
+                            #del self.gdejestao[self.cacastack[-1]][-1]
+                        self.cacastack.pop()
+                        print "yooo"
+                        return self.parse(tokenList)
+                print listapravila, self.x , self.cacastack
+                print "gde je stao ", self.gdejestao
+                print "gde je bio ", self.gdejebio
+                #vidi da li je dosao do kraja pravila ako jeste popni ga gore
                 return False
         
+        # ako je na pocetku odredjene grupe pravila (jedno pravilo moze da ima vise grupa pravila)
+        # i ako je duzina te grupe pravila veca oda broja preostalih tokena koje treba preci
         if self.gdejestao[self.cacastack[-1]][-1][0]==0 and len(listapravila) > len(tokenList)-self.x:
-       
+            #ako je broj grupa pravila koja proizilazi iz poslednjeg na stack-u veca od broja predjenih grupa
+            #tj ako nije presao sve grupe pravila
+            print "mwua",self.x
+            print self.cacastack
             if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]:
-            #prebaci na sledece pravilo 
+                #prebaci na sledecu grupu pravila 
                 self.gdejestao[self.cacastack[-1]][-1][1]+=1
-                #ovde izbrisi sa gdejebio poslednji i obrisi decu njegovog caleta   
+                #ovde izbrisi sa gdejebio poslednji i obrisi decu njegovog caleta
+                self.gdejestao[self.cacastack[-1]][-1][0]=0
+                print 396
+                #self.x-=self.gdejestao[self.cacastack[-1]][-1][2]
+
+                self.x-=self.removefromhs()
+                self.gdejestao[self.cacastack[-1]][-1][2]=0
+                print "desi bebo"
                 return self.parse(tokenList)
             else:
+                print "drugo","x je ",self.x, self.cacastack , self.gdejebio, self.gdejestao
+                print "e ", self.helperstack, listapravila
                 return False
         
         for index, pravilo in enumerate(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]): 
         #proveri da li je list/terminal i da li je jednak tipu tokena
+            print self.x, pravilo
             self.gdejebio.append(pravilo)
             if pravilo not in grammar.keys(): #and pravilo==tokenList[x].type:
                 #za svaki sledeci pomeri pokazivac
@@ -333,9 +419,12 @@ class ParseText:
                     # terminalnode = createnode(pravilo)
                     # gdejebio[-1].add(terminalnode)
                     self.x+=1
+                    print "povecao je x za jedan ",self.x , pravilo
                     self.gdejestao[self.cacastack[-1]][-1][2]+=1
+                    self.uphelperstack()
                     #da li je presao jednu listu pravila , ako jeste i ako na cacastack-u ima vise od jednog
                     if self.gdejestao[self.cacastack[-1]][-1][0]==len(listapravila):
+                        #print "423"
                         if len(self.cacastack)>1:
                             #ne moze da se vrati skroz do kraja , tj moze samo do expr
                             if len(self.gdejestao[self.cacastack[-1]])>1:
@@ -343,47 +432,67 @@ class ParseText:
                                 izbaceni[self.cacastack[-1]].append((izbaceni[self.cacastack[-1]][0],poslednji))
                                 #del self.gdejestao[self.cacastack[-1]][-1]
                             self.cacastack.pop()
+                            #self.deletelasths()
                             return self.parse(tokenList)
                         else:
+                            print "trece"
                             return False
+                    #print "436"
+
                 elif self.x <=len(tokenList)-1 and pravilo!=tokenList[self.x].type.lower():
+                    print "usao je u if",pravilo
                     if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]: 
-                        
+                        print "da li je i ovde usao a trebalo bi",self.x
                         self.gdejestao[self.cacastack[-1]][-1][1]+=1
                         #resetuj gde je stao tj x == 0  
                         self.gdejestao[self.cacastack[-1]][-1][0]=0
                         #smanjujem x za sve pronadjene u tom pravilu
-                        self.x-=self.gdejestao[self.cacastack[-1]][-1][2]   
+                        """ovde x treba umanjiti za poslednji sa helperstack-a , popovati helperstack-a da bi se 
+                        pravi 'poslednji' uzimao u obzir"""
+                        print 449 , self.x#, self.removefromhs()
+                        #self.x-=self.gdejestao[self.cacastack[-1]][-1][2]  
+                        print self.helperstack
+                        self.x-= self.removefromhs()
                         #popuje ovaj, tj poslednji
-                        self.gdejestao[self.cacastack[-1]][-1][2]=0     
+
+                        self.gdejestao[self.cacastack[-1]][-1][2]=0    
+                        print self.x 
                         #del gdejestao[cacastack[-1]][-1]   #baca out ouf range na 87
                         return self.parse(tokenList)
                     elif len(self.cacastack)>1:
-                        self.x-=self.gdejestao[self.cacastack[-1]][-1][2] 
+                        print 458
+                        #self.x-=self.gdejestao[self.cacastack[-1]][-1][2] 
+                        self.x-=self.removefromhs()
                         self.gdejestao[self.cacastack[-1]][-1][2]=0
-                       
+                        print "prvi elif"
                         del self.cacastack[-1]
             
                         if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]:
-                           
+                            print "drugi elif"
                             self.gdejestao[self.cacastack[-1]][-1][1]+=1
                             self.gdejestao[self.cacastack[-1]][-1][0]=0
-                            self.x-=self.gdejestao[self.cacastack[-1]][-1][2] 
+                            print 468
+                            #self.x-=self.gdejestao[self.cacastack[-1]][-1][2] 
+                            self.x-=self.removefromhs()
                             self.gdejestao[self.cacastack[-1]][-1][2]=0
                         else:
                             #stavi da je dosao do kraja pravila u gdejestao jer ako je == samo ce da predje na sledece pravilo a ne niz pravila
+                            print "dsfsdfsdfsd"
                             print grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
                             self.gdejestao[self.cacastack[-1]][-1][0]=len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])    
                         
                         return self.parse(tokenList)
 
                 else:
+                    print "cetvrto"
                     return False
             #ako nije list/terminal nadji listu sa tim key-em u dictionary-u i dodaj ga na caca stack
             else:
                 #gdejestao[cacastack[-1]][0]=index+1 #nije tu stao, jer index uvek krece od nule 
                 self.gdejestao[self.cacastack[-1]][-1][0]+=1
                 self.cacastack.append(pravilo)
+                self.addnewtohs(pravilo)
+
 
                 if pravilo not in self.gdejestao:
                     self.gdejestao[pravilo]=[]
@@ -474,36 +583,22 @@ print p.parse(tokenList)
 # print nodes['number']
 # print globals()[nodes['number']]
 # #createnode("number", "probica")
-ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
-ast.createtree("expr")
-print ast.stack2[0].dooperation(),"printaj listu"
-# print ast.stack2[0].childrens[0].childrens[1].dooperation()
-#napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
-
-def getjsonobject(paramlist, loaded_json_string,conditions=None):
-    """Returns json object, where paramlist is 'path' to it. 
-        If path to it is not valid a.k.a object doesn't exists
-        it will return None"""
-    jsonobject = reduce(dict.get,paramlist,loaded_json_string)
-    if conditions is not None:
-        result = []
-        for jo in jsonobject:
-            evaluated_conditions = [condition[1](getjsonobject(condition[0],jo),condition[2]) \
-                                    for condition in conditions]
-            if all(evaluated_conditions):
-                result.append(jo)
-        return result
-    else:
-        return jsonobject
+# ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
+# ast.createtree("expr")
+# print ast.stack2[0].dooperation(),"printaj listu"
+# # print ast.stack2[0].childrens[0].childrens[1].dooperation()
+# #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
 
 
-jsonstring='{"dit1":{"dit2":{"ime":"sale" , "titula" :[{"car":"gospodar","lastname":"univer"},{"car":"eee","lastname":"sveta"}]}}}'
-jsonstring1='{"sale":"car"}'
-print getjsonobject(["sale"], json.loads(jsonstring1)),"fdsdsfsdfsdfdsfsd"
 
-#jsonstring = '{"employees": [{ "firstName":"John" , "lastName":"Doe" }, { "firstName":"Anna" , "lastName":"Smith" },]}'
-conditions = [(["car"], operator.le ,"ee")]
-a = getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring),conditions)
 
-print a,"bravo"
+# jsonstring='{"dit1":{"dit2":{"ime":"sale" , "titula" :[{"car":"gospodar","lastname":"univer"},{"car":"eee","lastname":"sveta"}]}}}'
+# jsonstring1='{"sale":"car"}'
+# print getjsonobject(["sale"], json.loads(jsonstring1)),"fdsdsfsdfsdfdsfsd"
+
+# #jsonstring = '{"employees": [{ "firstName":"John" , "lastName":"Doe" }, { "firstName":"Anna" , "lastName":"Smith" },]}'
+# conditions = [(["car"], operator.le ,"ee")]
+# a = getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring),conditions)
+
+# print a,"bravo"
 #print getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring), conditions) , "printaj"

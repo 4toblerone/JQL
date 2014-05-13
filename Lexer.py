@@ -25,4 +25,4 @@ class Lexer(object):
             print sometoken.type """        
 
 proba = Lexer()        
-print proba.breakDownStringToTokens("1 select dele ' neki string' < > fdsa -> remove from <= => = == =")
+print proba.breakDownStringToTokens("1 select dele ' neki string' < > fdsa -> remove from <= => = == = get where and")
