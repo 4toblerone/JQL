@@ -286,13 +286,13 @@ nodes={"expr" : "ExprNode",
 #         "stringexpr" : [[]]
 #         }
 
-grammar={"expr":[["mathop"]],
+grammar={"expr":[["andmathop"]],
            "andmathop":[["mathop","and","andmathop"],["mathop"]],
-           "mathop":[["number"]],
-           "operator": [["plus"],["minus"]] }
+           "mathop":[["number", "operator", "mathop"],["number"]],
+           "operator": [["plus"]] }
 
-tokenList = Lexer().breakDownStringToTokens(" 7")
-
+tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7")
+print tokenList
 izbaceni={} 
 
 print tokenList
@@ -362,7 +362,7 @@ class ParseText:
 
                 return True
             else:
-                
+                print "*************"
                 print self.gdejestao[self.cacastack[-1]][-1][0] , len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1
                 if self.gdejestao[self.cacastack[-1]][-1][0]==len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1:
                     print "e desi yooooooooooooooo"
@@ -439,8 +439,13 @@ class ParseText:
                             return False
                     #print "436"
 
+                """U OVOM DELU TREBA SKINUTI SA GDE JE STAO STACKA!!!"""
+                #ukoliko nije dosao do poslednjeg tokena i trenutno pravilo nije jednako trenutnom tokenu
                 elif self.x <=len(tokenList)-1 and pravilo!=tokenList[self.x].type.lower():
                     print "usao je u if",pravilo
+
+                    #ukoliko duzina liste pravila koja proizilazi iz poslednjeg sa cacastack-a 
+                    #veca od
                     if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]: 
                         print "da li je i ovde usao a trebalo bi",self.x
                         self.gdejestao[self.cacastack[-1]][-1][1]+=1
@@ -497,6 +502,7 @@ class ParseText:
                 if pravilo not in self.gdejestao:
                     self.gdejestao[pravilo]=[]
                 self.gdejestao[pravilo].append([0,0,0])
+                print "printaj  sta dodaje " , pravilo 
                 izbaceni[pravilo]=izbaceni.get(pravilo,[-1]) 
                 izbaceni[pravilo][0]+=1#poveca brojac ukupnih "cvorova" jednog tipa za jedan
                 return self.parse(tokenList)
@@ -576,15 +582,18 @@ class AST(object):
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
 # mergeall(izbaceni,p.gdejestao)
-# p.gdejestao = mergeall(izbaceni, p.gdejestao)
-# print p.gdejestao
+
 p = ParseText()
 print p.parse(tokenList)
+print p.gdejestao
+p.gdejestao = mergeall(izbaceni, p.gdejestao)
+print p.gdejestao
 # print nodes['number']
 # print globals()[nodes['number']]
 # #createnode("number", "probica")
 # ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
 # ast.createtree("expr")
+# print ast.stack2
 # print ast.stack2[0].dooperation(),"printaj listu"
 # # print ast.stack2[0].childrens[0].childrens[1].dooperation()
 # #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
