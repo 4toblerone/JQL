@@ -288,10 +288,10 @@ nodes={"expr" : "ExprNode",
 
 grammar={"expr":[["andmathop"]],
            "andmathop":[["mathop","and","andmathop"],["mathop"]],
-           "mathop":[["number", "operator", "mathop"],["number"]],
+           "mathop":[["number","operator", "mathop"],["number"]],
            "operator": [["plus"]] }
 
-tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7")
+tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7 + 7 ")
 print tokenList
 izbaceni={} 
 
@@ -336,14 +336,31 @@ class ParseText:
     def deletelasths(self):
         del self.helperstack[-1]
 
+    def dalijedosaodokrajapravila(self):
+        return self.gdejestao[self.cacastack[-1]][-1][1]<len(grammar[self.cacastack[-1]])
+
+    def brisisagdejestao(self):
+        mergeall(izbaceni, self.gdejestao)
+        def dothedeletion():
+            if not self.dalijedosaodokrajapravila():
+                #obrisi sa cacastacka poslednji i poslednji tog tipa sa gdejestao
+                self.removefromhs()
+                del self.gdejestao[self.cacastack[-1]][-1]
+                del self.cacastack[-1]
+                return dothedeletion()
+        dothedeletion()
+        print "neki delete je odradjen"
+
     #@resetfileds
     def parse(self,tokenList):
-    
+        #posle smanjenja x je za jedan visi nekako:/
         listapravila = grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
         #ovde provera da li je dosao i do kraja pravila
         if len(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:])==0: 
             print "a"
             if len(self.cacastack)>1:
+                #ovde nije!
+                #self.gdejestao[self.cacastack[-1]][-1][1]+=1
                 self.cacastack.pop()
                 return self.parse(tokenList)
             elif len(tokenList)>self.x:
@@ -351,21 +368,58 @@ class ParseText:
                 print self.cacastack, self.gdejestao, self.gdejebio
                 return False
 
-        #da li je presao sve tokene u listi, ako jeste 
+        #da li je presao sve tokene u listi, ako jeste
         if self.x == len(tokenList):
-            print "b"
+            #print "b"
             if len(self.cacastack)==1 : 
                 # print listapravila, self.x , self.cacastack
-                print "gde je stao ", self.gdejestao
+                #print "gde je stao ", self.gdejestao
                 # print "gde je bio ", self.gdejebio
-                print "izbaceni", izbaceni
+                #print "izbaceni", izbaceni
 
                 return True
             else:
                 print "*************"
-                print self.gdejestao[self.cacastack[-1]][-1][0] , len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1
+                #print self.gdejestao[self.cacastack[-1]][-1][0] , len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1
+                print self.gdejestao
+                #print mergeall(izbaceni, self.gdejestao)
+                print self.gdejestao
+                #ovde je neka greska!!!
+                print "e"
+                print self.gdejestao[self.cacastack[-1]][-1][0], len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1
+                print grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
+                #print "eeeeeeeeeeee",mergeall(izbaceni, self.gdejestao)
+                
+                #proveri da li ima jos listi pravila, ako ima prebaci na sledecu listu i smanji self.x-=removefromxs()
+                
+                if self.gdejestao[self.cacastack[-1]][-1][1]<len(grammar[self.cacastack[-1]]):
+                    
+                    print "e deste sta ima!!!!!!!!!!!!"
+                    #ovde obrisi sveee sa gdejestaostacka
+                    #ne merguje kako treba!!!
+                    #na helperstacku nema sve za brisanje!!!
+                    self.gdejestao = mergeall(izbaceni, self.gdejestao)
+                    izbaceni.clear()
+                    while self.helperstack[-1][0] is not self.cacastack[-1]:
+                        del self.gdejestao[self.helperstack[-1][0]][-1]
+                        self.x-=self.removefromhs()
+                        
+                        #obrisi poslednje sa gdejestaocka pri cemu su oni pravila koja proizilaze iz cacastastack poslednjeg
+                        #pass
+                    
+                    self.gdejestao[self.cacastack[-1]][-1][1]+=1
+                    self.gdejestao[self.cacastack[-1]][-1][0]=0
+                    #print 468
+                            #self.x-=self.gdejestao[self.cacastack[-1]][-1][2]
+                    #ovo mora u metodu koja ce provervati da li je dosao do kraja i skidati
+                    #sa caca i gdejebio stacka  
+                    #self.x-=self.removefromhs()
+                    #self.x-=-1
+                    self.gdejestao[self.cacastack[-1]][-1][2]=0
+                    return self.parse(tokenList)
+                
                 if self.gdejestao[self.cacastack[-1]][-1][0]==len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])-1:
-                    print "e desi yooooooooooooooo"
+                    #print "e desi yooooooooooooooo"
                     if len(self.cacastack)>1:
                         #ne moze da se vrati skroz do kraja , tj moze samo do expr
                         if len(self.gdejestao[self.cacastack[-1]])>1:
@@ -373,12 +427,13 @@ class ParseText:
                             izbaceni[self.cacastack[-1]].append((izbaceni[self.cacastack[-1]][0],poslednji))
                             #del self.gdejestao[self.cacastack[-1]][-1]
                         self.cacastack.pop()
-                        print "yooo"
+                        #print "yooo"
                         return self.parse(tokenList)
-                print listapravila, self.x , self.cacastack
-                print "gde je stao ", self.gdejestao
-                print "gde je bio ", self.gdejebio
+                #print listapravila, self.x , self.cacastack
+                #print "gde je stao ", self.gdejestao
+                #print "gde je bio ", self.gdejebio
                 #vidi da li je dosao do kraja pravila ako jeste popni ga gore
+                print self.gdejestao 
                 return False
         
         # ako je na pocetku odredjene grupe pravila (jedno pravilo moze da ima vise grupa pravila)
@@ -386,8 +441,8 @@ class ParseText:
         if self.gdejestao[self.cacastack[-1]][-1][0]==0 and len(listapravila) > len(tokenList)-self.x:
             #ako je broj grupa pravila koja proizilazi iz poslednjeg na stack-u veca od broja predjenih grupa
             #tj ako nije presao sve grupe pravila
-            print "mwua",self.x
-            print self.cacastack
+            #print "mwua",self.x
+            #print self.cacastack
             if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]:
                 #prebaci na sledecu grupu pravila 
                 self.gdejestao[self.cacastack[-1]][-1][1]+=1
@@ -398,11 +453,11 @@ class ParseText:
 
                 self.x-=self.removefromhs()
                 self.gdejestao[self.cacastack[-1]][-1][2]=0
-                print "desi bebo"
+                #print "desi bebo"
                 return self.parse(tokenList)
             else:
-                print "drugo","x je ",self.x, self.cacastack , self.gdejebio, self.gdejestao
-                print "e ", self.helperstack, listapravila
+                #print "drugo","x je ",self.x, self.cacastack , self.gdejebio, self.gdejestao
+                #print "e ", self.helperstack, listapravila
                 return False
         
         for index, pravilo in enumerate(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]): 
@@ -439,13 +494,8 @@ class ParseText:
                             return False
                     #print "436"
 
-                """U OVOM DELU TREBA SKINUTI SA GDE JE STAO STACKA!!!"""
-                #ukoliko nije dosao do poslednjeg tokena i trenutno pravilo nije jednako trenutnom tokenu
                 elif self.x <=len(tokenList)-1 and pravilo!=tokenList[self.x].type.lower():
                     print "usao je u if",pravilo
-
-                    #ukoliko duzina liste pravila koja proizilazi iz poslednjeg sa cacastack-a 
-                    #veca od
                     if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]: 
                         print "da li je i ovde usao a trebalo bi",self.x
                         self.gdejestao[self.cacastack[-1]][-1][1]+=1
@@ -462,16 +512,18 @@ class ParseText:
 
                         self.gdejestao[self.cacastack[-1]][-1][2]=0    
                         print self.x 
-                        #del gdejestao[cacastack[-1]][-1]   #baca out ouf range na 87
+                        del self.gdejestao[self.cacastack[-1]][-1]   #baca out ouf range na 87
                         return self.parse(tokenList)
                     elif len(self.cacastack)>1:
                         print 458
                         #self.x-=self.gdejestao[self.cacastack[-1]][-1][2] 
                         self.x-=self.removefromhs()
+                        #zameni mesta del sa self.cacastack-a i 467 i mosdef obrisati poslednji sa gde je stao stacka-a
                         self.gdejestao[self.cacastack[-1]][-1][2]=0
                         print "prvi elif"
+                        del self.gdejestao[self.cacastack[-1]][-1]
                         del self.cacastack[-1]
-            
+                        #ukoliko je nije dosao do poslednje liste pravila, tj. ukoliko imas jos listi pravila
                         if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]:
                             print "drugi elif"
                             self.gdejestao[self.cacastack[-1]][-1][1]+=1
@@ -484,6 +536,7 @@ class ParseText:
                             #stavi da je dosao do kraja pravila u gdejestao jer ako je == samo ce da predje na sledece pravilo a ne niz pravila
                             print "dsfsdfsdfsd"
                             print grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
+                            #
                             self.gdejestao[self.cacastack[-1]][-1][0]=len(grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])    
                         
                         return self.parse(tokenList)
@@ -502,7 +555,6 @@ class ParseText:
                 if pravilo not in self.gdejestao:
                     self.gdejestao[pravilo]=[]
                 self.gdejestao[pravilo].append([0,0,0])
-                print "printaj  sta dodaje " , pravilo 
                 izbaceni[pravilo]=izbaceni.get(pravilo,[-1]) 
                 izbaceni[pravilo][0]+=1#poveca brojac ukupnih "cvorova" jednog tipa za jedan
                 return self.parse(tokenList)
@@ -524,6 +576,10 @@ def mergeall(izbaceni, gdejestao):
             elif len(gdejestaodeo)>0:
                 lista.append(gdejestaodeo[0])
                 del gdejestaodeo[0]
+            #dodataks
+            else:
+                lista.append(popeditems[0][1])
+                del popeditems[0]
             i+=1
         return lista
     
@@ -582,18 +638,16 @@ class AST(object):
 #u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
 #da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
 # mergeall(izbaceni,p.gdejestao)
-
+# p.gdejestao = mergeall(izbaceni, p.gdejestao)
+# print p.gdejestao
 p = ParseText()
 print p.parse(tokenList)
-print p.gdejestao
-p.gdejestao = mergeall(izbaceni, p.gdejestao)
-print p.gdejestao
+print mergeall(izbaceni, p.gdejestao)
 # print nodes['number']
 # print globals()[nodes['number']]
 # #createnode("number", "probica")
 # ast =  AST(tokenList,mergeall(izbaceni, p.gdejestao))
 # ast.createtree("expr")
-# print ast.stack2
 # print ast.stack2[0].dooperation(),"printaj listu"
 # # print ast.stack2[0].childrens[0].childrens[1].dooperation()
 # #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
