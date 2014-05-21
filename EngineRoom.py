@@ -291,7 +291,7 @@ grammar={"expr":[["andmathop"]],
            "mathop":[["number","operator", "mathop"],["number"]],
            "operator": [["plus"]] }
 
-tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7 + 7 ")
+tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7 + 7 and 7 + 7")
 print tokenList
 izbaceni={} 
 
@@ -332,7 +332,13 @@ class ParseText:
         #dodatak
         return tocut
 
-
+    def downsizehs(self):
+        tocut =  self.helperstack[-1][1]
+        for node in self.helperstack:
+            node[1]-=self.helperstack[-1][1]
+        return tocut
+        
+        
     def deletelasths(self):
         del self.helperstack[-1]
 
@@ -350,6 +356,15 @@ class ParseText:
                 return dothedeletion()
         dothedeletion()
         print "neki delete je odradjen"
+
+    def getlen(self, rule):
+        if len(izbaceni[rule])==1:
+            return 0
+        else:
+            return len(izbaceni[rule])
+    
+    def downsizeizbacene(self, rule):
+        izbaceni[rule]
 
     #@resetfileds
     def parse(self,tokenList):
@@ -373,10 +388,11 @@ class ParseText:
             #print "b"
             if len(self.cacastack)==1 : 
                 # print listapravila, self.x , self.cacastack
-                #print "gde je stao ", self.gdejestao
-                # print "gde je bio ", self.gdejebio
-                #print "izbaceni", izbaceni
-
+                print "gde je stao ", self.gdejestao
+                print "gde je bio ", self.gdejebio
+                print "izbaceni", izbaceni
+                self.gdejestao = mergeall(izbaceni, self.gdejestao)
+                print "stae ovo", self.gdejestao
                 return True
             else:
                 print "*************"
@@ -398,10 +414,18 @@ class ParseText:
                     #ovde obrisi sveee sa gdejestaostacka
                     #ne merguje kako treba!!!
                     #na helperstacku nema sve za brisanje!!!
+                    print "izbaceni ", izbaceni
+                    print "gdejestao ", self.gdejestao
                     self.gdejestao = mergeall(izbaceni, self.gdejestao)
                     izbaceni.clear()
+                    print "isprintano",self.gdejestao 
+                    #umesto helperstack-a brisati sa gdejebio stacka
                     while self.helperstack[-1][0] is not self.cacastack[-1]:
+                        #mora se onda i smanjiti i na izbacenima ukupan broj...
                         del self.gdejestao[self.helperstack[-1][0]][-1]
+                        
+                        if self.helperstack[-1][0] in izbaceni:
+                            izbaceni[self.helperstack[-1][0]][0]-=1
                         self.x-=self.removefromhs()
                         
                         #obrisi poslednje sa gdejestaocka pri cemu su oni pravila koja proizilaze iz cacastastack poslednjeg
@@ -451,7 +475,8 @@ class ParseText:
                 print 396
                 #self.x-=self.gdejestao[self.cacastack[-1]][-1][2]
 
-                self.x-=self.removefromhs()
+                #self.x-=self.removefromhs()
+                self.x-=self.downsizehs()
                 self.gdejestao[self.cacastack[-1]][-1][2]=0
                 #print "desi bebo"
                 return self.parse(tokenList)
@@ -513,6 +538,8 @@ class ParseText:
                         self.gdejestao[self.cacastack[-1]][-1][2]=0    
                         print self.x 
                         del self.gdejestao[self.cacastack[-1]][-1]   #baca out ouf range na 87
+                        #i ovde smanji za jedan u izbacenima
+                        izbaceni[self.cacastack[-1]][0]-=1
                         return self.parse(tokenList)
                     elif len(self.cacastack)>1:
                         print 458
@@ -521,7 +548,9 @@ class ParseText:
                         #zameni mesta del sa self.cacastack-a i 467 i mosdef obrisati poslednji sa gde je stao stacka-a
                         self.gdejestao[self.cacastack[-1]][-1][2]=0
                         print "prvi elif"
+                        # i ovde takodje smanji izbacene
                         del self.gdejestao[self.cacastack[-1]][-1]
+                        izbaceni[self.cacastack[-1]][0]-=1
                         del self.cacastack[-1]
                         #ukoliko je nije dosao do poslednje liste pravila, tj. ukoliko imas jos listi pravila
                         if len(grammar[self.cacastack[-1]])-1>self.gdejestao[self.cacastack[-1]][-1][1]:
@@ -530,7 +559,9 @@ class ParseText:
                             self.gdejestao[self.cacastack[-1]][-1][0]=0
                             print 468
                             #self.x-=self.gdejestao[self.cacastack[-1]][-1][2] 
-                            self.x-=self.removefromhs()
+                            #downsize sve na helperstacku za onoliko koliko ima na poslednjem, s tim da ne treba obrisati poslednji
+                            #self.x-=self.removefromhs()
+                            self.x-=self.downsizehs()
                             self.gdejestao[self.cacastack[-1]][-1][2]=0
                         else:
                             #stavi da je dosao do kraja pravila u gdejestao jer ako je == samo ce da predje na sledece pravilo a ne niz pravila
@@ -557,8 +588,10 @@ class ParseText:
                 self.gdejestao[pravilo].append([0,0,0])
                 izbaceni[pravilo]=izbaceni.get(pravilo,[-1]) 
                 izbaceni[pravilo][0]+=1#poveca brojac ukupnih "cvorova" jednog tipa za jedan
+                #izbaceni[pravilo][0]= len(self.gdejestao[pravilo]) + self.getlen(pravilo)-1
                 return self.parse(tokenList)
-
+"""izbaceni  {'operator': [2, (2, [1, 0, 1])], 'andmathop': [1], 'mathop': [3, (1, [1, 1, 1]), (3, [1, 1, 1])]}
+gdejestao  {'operator': [[1, 0, 1]], 'expr': [[1, 0, 0]], 'andmathop': [[3, 0, 1], [1, 0, 0]], 'mathop': [[3, 0, 1], [3, 0, 1]]}"""
 
 def mergeall(izbaceni, gdejestao):
 
@@ -642,7 +675,7 @@ class AST(object):
 # print p.gdejestao
 p = ParseText()
 print p.parse(tokenList)
-print mergeall(izbaceni, p.gdejestao)
+print "yo!",mergeall(izbaceni, p.gdejestao)
 # print nodes['number']
 # print globals()[nodes['number']]
 # #createnode("number", "probica")
