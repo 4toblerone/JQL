@@ -286,12 +286,13 @@ nodes={"expr" : "ExprNode",
 #         "stringexpr" : [[]]
 #         }
 
-grammar={"expr":[["andmathop"]],
+grammar={"expr":[["andmathopop"]],
+           "andmathopop" :[["andmathop","word", "andmathop"]],
            "andmathop":[["mathop","and","andmathop"],["mathop"]],
            "mathop":[["number","operator", "mathop"],["number"]],
            "operator": [["plus"]] }
 
-tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7 + 7 and 7 + 7")
+tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+7 edeste 7+7")
 print tokenList
 izbaceni={} 
 
@@ -361,7 +362,7 @@ class ParseText:
         if len(izbaceni[rule])==1:
             return 0
         else:
-            return len(izbaceni[rule])
+            return len(izbaceni[rule])-1
     
     def downsizeizbacene(self, rule):
         izbaceni[rule]
@@ -532,14 +533,14 @@ class ParseText:
                         print 449 , self.x#, self.removefromhs()
                         #self.x-=self.gdejestao[self.cacastack[-1]][-1][2]  
                         print self.helperstack
-                        self.x-= self.removefromhs()
+                        self.x-= self.removefromhs() #ne odradi downsize do kraja tj do andmathopa
                         #popuje ovaj, tj poslednji
 
                         self.gdejestao[self.cacastack[-1]][-1][2]=0    
                         print self.x 
-                        del self.gdejestao[self.cacastack[-1]][-1]   #baca out ouf range na 87
+                        #del self.gdejestao[self.cacastack[-1]][-1]   #baca out ouf range na 87 i ovde je problem
                         #i ovde smanji za jedan u izbacenima
-                        izbaceni[self.cacastack[-1]][0]-=1
+                        #izbaceni[self.cacastack[-1]][0]-=1
                         return self.parse(tokenList)
                     elif len(self.cacastack)>1:
                         print 458
@@ -587,8 +588,9 @@ class ParseText:
                     self.gdejestao[pravilo]=[]
                 self.gdejestao[pravilo].append([0,0,0])
                 izbaceni[pravilo]=izbaceni.get(pravilo,[-1]) 
-                izbaceni[pravilo][0]+=1#poveca brojac ukupnih "cvorova" jednog tipa za jedan
+                #izbaceni[pravilo][0]+=1#poveca brojac ukupnih "cvorova" jednog tipa za jedan
                 #izbaceni[pravilo][0]= len(self.gdejestao[pravilo]) + self.getlen(pravilo)-1
+                izbaceni[pravilo][0]= len(self.gdejestao[pravilo]) + len(izbaceni[pravilo])-2
                 return self.parse(tokenList)
 """izbaceni  {'operator': [2, (2, [1, 0, 1])], 'andmathop': [1], 'mathop': [3, (1, [1, 1, 1]), (3, [1, 1, 1])]}
 gdejestao  {'operator': [[1, 0, 1]], 'expr': [[1, 0, 0]], 'andmathop': [[3, 0, 1], [1, 0, 0]], 'mathop': [[3, 0, 1], [3, 0, 1]]}"""
