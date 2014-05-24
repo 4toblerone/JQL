@@ -292,7 +292,7 @@ grammar={"expr":[["andmathopop"]],
            "mathop":[["number","operator", "mathop"],["number"]],
            "operator": [["plus"]] }
 
-tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+7 edeste 7+7")
+tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+ 7 and 7 + 7 edeste 7+7 ")
 print tokenList
 izbaceni={} 
 
@@ -533,7 +533,19 @@ class ParseText:
                         print 449 , self.x#, self.removefromhs()
                         #self.x-=self.gdejestao[self.cacastack[-1]][-1][2]  
                         print self.helperstack
-                        self.x-= self.removefromhs() #ne odradi downsize do kraja tj do andmathopa
+                        #self.x-= self.removefromhs()
+                        #pocetak
+                        #dodaj provere za izbacene ako nema ni jednog u njima i smanjuj kako ih izbacujes
+                        while self.helperstack[-1][0] is not self.cacastack[-1]:
+                            if len(izbaceni[self.helperstack[-1][0]])>1 and izbaceni[self.helperstack[-1][0]][-1][0]==izbaceni[self.helperstack[-1][0]][0]:
+                                del izbaceni[self.helperstack[-1][0]][-1]
+                            else:
+                                del self.gdejestao[self.helperstack[-1][0]][-1]
+                            izbaceni[self.helperstack[-1][0]][0]-=1
+                            self.x-= self.removefromhs() #ne odradi downsize do kraja tj do andmathopa # ili remove pa na kraju downsize?
+                            #i kako brises sa helperstacka tako brisi poslednjeg sa gdejestao+izbaceni stacka
+                        self.x-=self.downsizehs() 
+                        #kraj dela promena
                         #popuje ovaj, tj poslednji
 
                         self.gdejestao[self.cacastack[-1]][-1][2]=0    
