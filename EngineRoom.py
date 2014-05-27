@@ -3,6 +3,10 @@ from collections import deque, Iterable
 import operator
 import json
 
+
+jsonstring='{"sale":{"kolikijecar":"car"}}'
+json_loaded = json.loads(jsonstring)
+
 class Node(object):
     """docstring for Node"""
     def __init__(self):
@@ -48,6 +52,7 @@ class LeafNode(Node):
 
 class ExprNode(Node):
     def dooperation(self):
+        print "Expr "
         return self.childrens[0].dooperation()
 
 class QueryNode(Node):
@@ -56,6 +61,7 @@ class QueryNode(Node):
 
 class RemoveExprNode(Node):
     def dooperation(self):
+        print "Remove expression"
         return self.childrens[0].dooperation()
 
 class AddExprNode(Node):
@@ -66,22 +72,28 @@ class UpdateExprNode(Node):
 
 class GetExprNode(Node):
     
-    def dooperation(self):
+    def dooperation(self,jsonstring=json_loaded):
+        print "getexpr"
         path_to_object = self.childrens[0].dooperation()
         from_object = getjsonobject(path_to_object, jsonstring)
+        print from_object , "from_object"
         result = self.childrens[1].dooperation(from_object)
+        print "result" , result
         return result
 
 
 class WutNode(Node):
     
     def dooperation(self,jsonstring):
+        print "wut node do"
         path_to_object = self.childrens[0].dooperation()
+        print path_to_object , "putanja"
         try:
             conditions = flattenlistoftuples(self.childrens[1])
         except IndexError:
             conditions=None
         jsonobject = getjsonobject(path_to_object, jsonstring, conditions)
+        print jsonobject , "ovo je json objekat"
         return jsonobject
 
 class ObjectNode(Node): 
@@ -277,13 +289,13 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need
         "updateexpr" : [["update" , "wut", "to" , "value"]],
         "object" : [["word","arrow","object"], ["word"]],
         "condition" : [["basiccondition", "and","condition"], ["basiccondition"]],
-        "basiccondition" : [["object", "comparisonop","word"]],
+        "basiccondition" : [["object", "comparisonop","value"]],
         "value" : [["word"],["number"]],
         "wut" : [["object", "where", "condition"], ["object"]],
         "comparisonop" : [["less"],["greater"],["twoequal"],["lessorequal"],["greaterorequal"]],
         "mathexpr" : [["number", "operator", "mathexpr"], ["number"]],
         "operator" : [["plus"],["minus"],["times"],["divide"]],
-        "stringexpr" : [[]]
+        "stringexpr" : [[]],
         }
 
 # grammar={"expr":[["andmathopop"]],
@@ -293,7 +305,8 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need
 #            "operator": [["plus"]] }
 
 #tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+ 7 and 7 + 7 edeste 7+7 ")
-tokenList = Lexer().breakDownStringToTokens("from nekiobjekat->deteobjekta where nekavrednost == drugavrednost and nekatrecavrednost == petoj and jedan == sedam  remove nekidrugiobjekat ")
+#tokenList = Lexer().breakDownStringToTokens("from nekibojekat->nekarec get nekidrugiobjeat->nestonesto where nesto == nesto and nesto == nesto ")
+tokenList = Lexer().breakDownStringToTokens(" from sale get kolikijecar")
 print tokenList
 #self.izbaceni={} 
 
@@ -305,6 +318,14 @@ def resetfileds(fn):
             self.__init__()
             return result 
         return wrapper
+
+def tryit(func):
+    def wrapit(*args):
+        try:
+            return func(*args)
+        except:
+            "Some error happend and there is 99%% chance it is syntax related"
+    return wrapit
 
 class ParseText:    
 
@@ -345,13 +366,8 @@ class ParseText:
     def deletelasths(self):
         del self.helperstack[-1]
 
-    def tryit(parsefunc):
-        try:
-            return parsefunc()
-        except:
-            print "doslo je do neke greske"
-
     #@resetfileds
+    @tryit
     def parse(self,tokenList):
         #posle smanjenja x je za jedan visi nekako:/
         listapravila = grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
@@ -412,9 +428,25 @@ class ParseText:
                 self.x-=self.downsizehs()
                 self.gdejestao[self.cacastack[-1]][-1][2]=0
                 return self.parse(tokenList)
-            else:
+            elif len(self.cacastack)>1:#ukoliko cacastack predzadnji nije na poslednjem pravilu
+                
                 #print "drugo","x je ",self.x, self.cacastack , self.gdejebio, self.gdejestao
                 #print "e ", self.helperstack, listapravila
+                #ukoliko je presao sve grupe pravila , obrisi sve sa helperstacka do c
+                del self.cacastack[-1]
+                while self.helperstack[-1][0] is not self.cacastack[-1]:
+                        if len(self.izbaceni[self.helperstack[-1][0]])>1 and self.izbaceni[self.helperstack[-1][0]][-1][0]==self.izbaceni[self.helperstack[-1][0]][0]:
+                            del self.izbaceni[self.helperstack[-1][0]][-1]
+                        else:
+                            del self.gdejestao[self.helperstack[-1][0]][-1]
+                        self.izbaceni[self.helperstack[-1][0]][0]-=1
+                        self.x-= self.removefromhs()
+                self.x-=self.downsizehs()
+                self.gdejestao[self.cacastack[-1]][-1][1]+=1
+                self.gdejestao[self.cacastack[-1]][-1][0]=0 
+                self.gdejestao[self.cacastack[-1]][-1][2]=0
+                return self.parse(tokenList)
+            else:
                 return False
         
         for index, pravilo in enumerate(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]): 
@@ -473,7 +505,15 @@ class ParseText:
                         #self.izbaceni[self.cacastack[-1]][0]-=1
                         return self.parse(tokenList)
                     elif len(self.cacastack)>1:
-                        self.x-=self.removefromhs()
+                        
+                        while self.helperstack[-1][0] is not self.cacastack[-1]:
+                            if len(self.izbaceni[self.helperstack[-1][0]])>1 and self.izbaceni[self.helperstack[-1][0]][-1][0]==self.izbaceni[self.helperstack[-1][0]][0]:
+                                del self.izbaceni[self.helperstack[-1][0]][-1]
+                            else:
+                                del self.gdejestao[self.helperstack[-1][0]][-1]
+                            self.izbaceni[self.helperstack[-1][0]][0]-=1
+                            self.x-= self.removefromhs()
+                        self.x-=self.downsizehs()#ovde mora da poizbacuje sve do cacastacka
                         #zameni mesta del sa self.cacastack-a i 467 i mosdef obrisati poslednji sa gde je stao stacka-a
                         self.gdejestao[self.cacastack[-1]][-1][2]=0
                         # i ovde takodje smanji izbacene
@@ -487,6 +527,7 @@ class ParseText:
                             #downsize sve na helperstacku za onoliko koliko ima na poslednjem, s tim da ne treba obrisati poslednji
                             #self.x-=self.removefromhs()
                             self.x-=self.downsizehs()
+                            self.deletelasths()
                             self.gdejestao[self.cacastack[-1]][-1][2]=0
                         else:
                             #stavi da je dosao do kraja pravila u gdejestao jer ako je == samo ce da predje na sledece pravilo a ne niz pravila
@@ -592,12 +633,17 @@ class AST(object):
 # print p.gdejestao
 p = ParseText()
 print p.parse(tokenList)
-print "yo!",mergeall(p.izbaceni, p.gdejestao)
+print p.gdejestao
+print "**************"
+
 # print nodes['number']
 # print globals()[nodes['number']]
 # #createnode("number", "probica")
-# ast =  AST(tokenList,mergeall(self.izbaceni, p.gdejestao))
-# ast.createtree("expr")
+ast =  AST(tokenList,p.gdejestao)
+ast.createtree("expr")
+print ast.stack2[0]
+ast.stack2[0].dooperation()
+#print json.loads(jsonstring1)
 # print ast.stack2[0].dooperation(),"printaj listu"
 # # print ast.stack2[0].childrens[0].childrens[1].dooperation()
 # #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
@@ -605,8 +651,7 @@ print "yo!",mergeall(p.izbaceni, p.gdejestao)
 
 
 
-# jsonstring='{"dit1":{"dit2":{"ime":"sale" , "titula" :[{"car":"gospodar","lastname":"univer"},{"car":"eee","lastname":"sveta"}]}}}'
-# jsonstring1='{"sale":"car"}'
+# jsonstring='{"dit1":{"dit2":{"ime":"sale" , "titula" :[{"car":"gospodar","lastname":"univer"},{"car":"eee","lastname":"sveta
 # print getjsonobject(["sale"], json.loads(jsonstring1)),"fdsdsfsdfsdfdsfsd"
 
 # #jsonstring = '{"employees": [{ "firstName":"John" , "lastName":"Doe" }, { "firstName":"Anna" , "lastName":"Smith" },]}'

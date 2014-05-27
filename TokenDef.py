@@ -85,8 +85,16 @@ def t_GET(token):
   r'get'
   return token
 
+def t_UPDATE(token):
+  r'update'
+  return token
+
 def t_WHERE(token):
   r'where'
+  return token
+
+def t_TO(token):
+  r'to'
   return token
 
 def t_AND(token):
@@ -159,6 +167,8 @@ tokens = [
           'FROM',
           'WHERE',
           'GET',
+          'UPDATE',
+          'TO',
           'AND'
           ] + list(predicate.values())
 
