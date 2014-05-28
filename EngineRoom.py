@@ -4,7 +4,7 @@ import operator
 import json
 
 
-jsonstring='{"sale":{"kolikijecar":"car"}}'
+jsonstring='{"sale":{"kolikijecar":"veliki" , "items" : [{"id" : "prvi" , "ime" : "Sale"},{"id":"drugi","ime" : "Car"}]}}'
 json_loaded = json.loads(jsonstring)
 
 class Node(object):
@@ -77,24 +77,25 @@ class GetExprNode(Node):
         path_to_object = self.childrens[0].dooperation()
         from_object = getjsonobject(path_to_object, jsonstring)
         print from_object , "from_object"
-        result = self.childrens[1].dooperation(from_object)
-        print "result" , result
-        return result
+        #result = self.childrens[1].dooperation(from_object)
+        #print "result" , result
+        what_to_return =  self.childrens[1].dooperation() #tuple , object we are looking for and conditions if there are any
+        return getjsonobject(what_to_return[0], from_object, what_to_return[1])
 
 
 class WutNode(Node):
     
-    def dooperation(self,jsonstring):
+    def dooperation(self):
+        """Should return path to the request object and 
+            optional list of conditions"""
         print "wut node do"
         path_to_object = self.childrens[0].dooperation()
         print path_to_object , "putanja"
         try:
-            conditions = flattenlistoftuples(self.childrens[1])
+            conditions = flattenlistoftuples(self.childrens[1].dooperation())
         except IndexError:
             conditions=None
-        jsonobject = getjsonobject(path_to_object, jsonstring, conditions)
-        print jsonobject , "ovo je json objekat"
-        return jsonobject
+        return (path_to_object, conditions)
 
 class ObjectNode(Node): 
     
@@ -129,7 +130,7 @@ class BasicConditionNode(Node):
 class ValueNode(Node):
 
     def dooperation(self):
-        return self.childrens[0].value
+        return self.childrens[0].dooperation()
 
 class JsonStringNode(LeafNode):
     pass
@@ -233,7 +234,8 @@ def getjsonobject(paramlist, loaded_json_string,conditions=None):
         for jo in jsonobject:
             evaluated_conditions = [condition[1](getjsonobject(condition[0],jo),condition[2]) \
                                     for condition in conditions]
-            if all(evaluated_conditions):
+            if all(evaluated_conditions) and evaluated_conditions:
+                print jo, "ovde se desava neka magija"
                 result.append(jo)
         return result
     else:
@@ -306,7 +308,7 @@ grammar={"expr":[["queryexpr"] , ["mathexpr"] , ["stringexpr"]],#there is a need
 
 #tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+ 7 and 7 + 7 edeste 7+7 ")
 #tokenList = Lexer().breakDownStringToTokens("from nekibojekat->nekarec get nekidrugiobjeat->nestonesto where nesto == nesto and nesto == nesto ")
-tokenList = Lexer().breakDownStringToTokens(" from sale get kolikijecar")
+tokenList = Lexer().breakDownStringToTokens(" from sale get items where id == prvi ")
 print tokenList
 #self.izbaceni={} 
 
@@ -642,7 +644,10 @@ print "**************"
 ast =  AST(tokenList,p.gdejestao)
 ast.createtree("expr")
 print ast.stack2[0]
-ast.stack2[0].dooperation()
+print ast.stack2[0].dooperation(), "e ovo vraca"
+
+for each in ast.stack2[0].dooperation():
+    print each["ime"]
 #print json.loads(jsonstring1)
 # print ast.stack2[0].dooperation(),"printaj listu"
 # # print ast.stack2[0].childrens[0].childrens[1].dooperation()
