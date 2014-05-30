@@ -67,13 +67,15 @@ class QueryNode(Node):
 
 
 class RemoveExprNode(Node):
+    #TODO at end of dooperation replace original json file with one from removeexpr
+    #TODO figure out what should you return at and of it
     def dooperation(self, jsonstring = json_loaded):
         print "Remove expression"
         path_to_object = self.childrens[0].dooperation()
         what_to_delete = self.childrens[1].dooperation()
         print delete_from_json(path_to_object,jsonstring,what_to_delete[0],what_to_delete[1])
-        #replace the orginal json file with one from removeexpr
-        
+
+
 
 
 class AddExprNode(Node):
@@ -415,10 +417,16 @@ class ParseText:
     def deletelasths(self):
         del self.helperstack[-1]
 
+    def move_forward(self):
+        self.gdejestao[self.cacastack[-1]][-1][1] += 1
+        self.gdejestao[self.cacastack[-1]][-1][0] = 0
+        self.gdejestao[self.cacastack[-1]][-1][2] = 0
+
     #@resetfileds
     @tryit
     def parse(self, tokenList):
         #posle smanjenja x je za jedan visi nekako:/
+
         listapravila = grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
         #ovde provera da li je dosao i do kraja pravila
         if len(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]) == 0:
@@ -448,9 +456,7 @@ class ParseText:
                             self.izbaceni[self.helperstack[-1][0]][0] -= 1
                         self.x -= self.removefromhs()
 
-                    self.gdejestao[self.cacastack[-1]][-1][1] += 1
-                    self.gdejestao[self.cacastack[-1]][-1][0] = 0
-                    self.gdejestao[self.cacastack[-1]][-1][2] = 0
+                    self.move_forward()
                     return self.parse(tokenList)
 
                 if self.gdejestao[self.cacastack[-1]][-1][0] == len(
@@ -472,11 +478,9 @@ class ParseText:
             #tj ako nije presao sve grupe pravila
             if len(grammar[self.cacastack[-1]]) - 1 > self.gdejestao[self.cacastack[-1]][-1][1]:
                 #prebaci na sledecu grupu pravila
-                self.gdejestao[self.cacastack[-1]][-1][1] += 1
+                self.move_forward()
                 #ovde izbrisi sa gdejebio poslednji i obrisi decu njegovog caleta
-                self.gdejestao[self.cacastack[-1]][-1][0] = 0
                 self.x -= self.downsizehs()
-                self.gdejestao[self.cacastack[-1]][-1][2] = 0
                 return self.parse(tokenList)
             elif len(self.cacastack) > 1:  #ukoliko cacastack predzadnji nije na poslednjem pravilu
 
@@ -493,9 +497,7 @@ class ParseText:
                     self.izbaceni[self.helperstack[-1][0]][0] -= 1
                     self.x -= self.removefromhs()
                 self.x -= self.downsizehs()
-                self.gdejestao[self.cacastack[-1]][-1][1] += 1
-                self.gdejestao[self.cacastack[-1]][-1][0] = 0
-                self.gdejestao[self.cacastack[-1]][-1][2] = 0
+                self.move_forward()
                 return self.parse(tokenList)
             else:
                 return False
@@ -578,13 +580,11 @@ class ParseText:
                         del self.cacastack[-1]
                         #ukoliko je nije dosao do poslednje liste pravila, tj. ukoliko imas jos listi pravila
                         if len(grammar[self.cacastack[-1]]) - 1 > self.gdejestao[self.cacastack[-1]][-1][1]:
-                            self.gdejestao[self.cacastack[-1]][-1][1] += 1
-                            self.gdejestao[self.cacastack[-1]][-1][0] = 0
+                            self.move_forward()
                             #downsize sve na helperstacku za onoliko koliko ima na poslednjem, s tim da ne treba obrisati poslednji
                             #self.x-=self.removefromhs()
                             self.x -= self.downsizehs()
                             self.deletelasths()
-                            self.gdejestao[self.cacastack[-1]][-1][2] = 0
                         else:
                             #stavi da je dosao do kraja pravila u gdejestao jer ako je == samo ce da predje na sledece pravilo a ne niz pravila
                             print grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
@@ -684,19 +684,12 @@ class AST(object):
             else:
                 self.dek.popleft()
 
-#u svim LeafNode-ovima ide plus token, index+=1 deo mora da je problem
-#da li da odradim kopiju sa deque i da radim popleft(sigurno je manje efikasno od indexa) ili pogledam ovo sa indexom
-# mergeall(self.izbaceni,p.gdejestao)
-# p.gdejestao = mergeall(self.izbaceni, p.gdejestao)
-# print p.gdejestao
+
 p = ParseText()
 print p.parse(tokenList)
 print p.gdejestao
 print "**************"
 
-# print nodes['number']
-# print globals()[nodes['number']]
-# #createnode("number", "probica")
 ast = AST(tokenList, p.gdejestao)
 ast.createtree("expr")
 print ast.stack2[0]
