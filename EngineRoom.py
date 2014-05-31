@@ -7,13 +7,11 @@ import json
 jsonstring = '{"sale":{"kolikijecar":"veliki" , "items" : [{"id" : "prvi" , "ime" : "Sale"},{"id":"drugi","ime" : "Car"}]}}'
 json_loaded = json.loads(jsonstring)
 
-
 class Node(object):
     """docstring for Node"""
 
     def __init__(self):
         self.childrens = []
-
 
     def add(self, child):
         self.childrens.append(child)
@@ -22,21 +20,6 @@ class Node(object):
         """do operation on childrens, eval"""
         pass
 
-
-    #probaj generator!
-    #ukoliko treba da predje na poslednje dete u listi vraca None, zasto?
-    #verovatno neki slucaj (koji ne vidim trenutno) 
-    #pri rekurziji nije pokriven
-    #Mora funkcija uvek da vrati nesto.
-
-    #da li da menjam str metodu tako da iskuljucuje ako je jedno dete i to token
-    #ili da leafnode-ovima dodam atribut token pa da dooperation vraca samo taj attribute 
-
-    #da li da uvedem LeafNode klasu koju ce svi leafnode-ovi nasledjivati i koja ce u odnosu
-    #na Node klasu imati samo dodat atribut za smestanje tokena i cija ce doooperation vracati 
-    #taj atribut? 
-
-    #Sta je los dizajn? 
     def __str__(self):
         print "<" + self.__class__.__name__ + ">"
         if len(self.childrens) == 0:
@@ -55,6 +38,15 @@ class LeafNode(Node):
         return self.token
 
 
+class BaseExprNode(Node):
+    def dooperation(self):
+        print "BaseExpr"
+        return
+
+class StrongExprNode(Node):
+    def dooperation(self):
+        pass
+
 class ExprNode(Node):
     def dooperation(self):
         print "Expr "
@@ -68,7 +60,7 @@ class QueryNode(Node):
 
 class RemoveExprNode(Node):
     #TODO at end of dooperation replace original json file with one from removeexpr
-    #TODO figure out what should you return at and of it
+    #TODO figure out what should you return at and of it, cuz' node above requires something
     def dooperation(self, jsonstring = json_loaded):
         print "Remove expression"
         path_to_object = self.childrens[0].dooperation()
@@ -76,10 +68,17 @@ class RemoveExprNode(Node):
         print delete_from_json(path_to_object,jsonstring,what_to_delete[0],what_to_delete[1])
 
 
-
-
 class AddExprNode(Node):
-    pass
+    def dooperation(self,jsonstring = json_loaded):
+        #get object or objects to which you have to add new json object
+        path_to_objects = self.childrens[0].dooperation()[0]
+        conditions = self.childrensp[0].dooperation()[1]
+        objects = getjsonobject(path_to_objects,jsonstring,conditions)
+        to_add = self.childrens[1].dooperation()
+        json.loads(to_add)
+        for object in objects:
+            pass
+
 
 
 class UpdateExprNode(Node):
@@ -138,6 +137,11 @@ class BasicConditionNode(Node):
         return (key, comparisonop, value)
 
 
+class VariableNode(Node):
+    def dooperation(self):
+        return self.childrens[0].dooperation()
+
+
 class ValueNode(Node):
     def dooperation(self):
         return self.childrens[0].dooperation()
@@ -158,6 +162,12 @@ class StringExprNode(Node):
 class ComparisonOpNode(Node):
     def dooperation(self):
         return self.childrens[0].dooperation()
+
+class EqualNode(LeafNode):
+    def dooperation(self):
+        #find way to have assignment function
+        #or maybe i don't even need it
+        return "gonna be"
 
 
 class LessNode(LeafNode):
@@ -308,6 +318,8 @@ nodes = {"expr": "ExprNode",
          "jsonstring": "JsonStringNode",
          "mathexpr": "MathExprNode",
          "stringexpr": "StringExprNode",
+         "baseexpr" : "BaseExprNode",
+         "variable" : "VariableNode",
 
          "comparisonop": "ComparisonOpNode",
          "less": "LessNode",
@@ -315,6 +327,7 @@ nodes = {"expr": "ExprNode",
          "lessorequal": "LessOrEqualNode",
          "equalorgreater": "EqualOrGreaterNode",
          "twoequal": "TwoEqualNode",
+         "equal" : "EqualNode",
 
          "word": "WordNode",
          "number": "NumberNode",
@@ -326,12 +339,16 @@ nodes = {"expr": "ExprNode",
          "divide": "DivideNode"
 }
 
-grammar = {"expr": [["queryexpr"], ["mathexpr"], ["stringexpr"]],
-           #there is a need for "cushion" rule for some reasone parser wont parserwont parse it directly
+
+#there is a need for "cushion" node
+grammar = {"baseexpr" : [["strongexpr"]],
+           "strongexpr" : [["variable","equal", "lcurlyb", "expr","rcurlyb"],["expr"]],#fix this shit
+           "expr": [["queryexpr"], ["mathexpr"], ["stringexpr"]],
+           "variable" : [["var","word"]],
            "queryexpr": [["removeexpr"], ["addexpr"], ["updateexpr"], ["getexpr"]],
            "removeexpr": [["from", "object", "remove", "wut"]],
            "getexpr": [["from", "object", "get", "wut"]],
-           "addexpr": [["to", "object", "add", "jsonstring_start", "jsonstring", "jsonstring_end"]],
+           "addexpr": [["to", "wut", "add", "jsonstring_start", "jsonstring", "jsonstring_end"]],
            "updateexpr": [["update", "wut", "to", "value"]],
            "object": [["word", "arrow", "object"], ["word"]],
            "condition": [["basiccondition", "and", "condition"], ["basiccondition"]],
@@ -352,7 +369,7 @@ grammar = {"expr": [["queryexpr"], ["mathexpr"], ["stringexpr"]],
 
 #tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+ 7 and 7 + 7 edeste 7+7 ")
 #tokenList = Lexer().breakDownStringToTokens("from nekibojekat->nekarec get nekidrugiobjeat->nestonesto where nesto == nesto and nesto == nesto ")
-tokenList = Lexer().breakDownStringToTokens(" from sale remove items where id == prvi ")
+tokenList = Lexer().breakDownStringToTokens("to sale->items where id == prvi add 'nekistring'")
 print tokenList
 #self.izbaceni={}
 
@@ -377,16 +394,15 @@ def tryit(func):
 
     return wrapit
 
-
 class ParseText:
     def __init__(self):
-        self.cacastack = ['expr']
-        self.helperstack = [['expr', 0]]
-        self.gdejestao = {'expr': [[0, 0,
+        self.cacastack = ['baseexpr']
+        self.helperstack = [['baseexpr', 0]]
+        self.gdejestao = {'baseexpr': [[0, 0,
                                     0]]}  #3. int sluzi za broja tokena tj da bi se znalo koliko unazad da se vrati u slucaju da ne naidje na odgvarajuce pravilo
         #2. int oznacava odabrano prailo
         #sta je 1. predjeno pravilo u ovom slucaju token , tj pomeraj u pravilo listi
-        self.gdejebio = [createnode(nodes["expr"])]
+        self.gdejebio = [createnode(nodes["baseexpr"])]
         self.x = 0
         self.izbaceni = {}
 
@@ -404,7 +420,6 @@ class ParseText:
         del self.helperstack[-1]
         for upstairrule in self.helperstack:
             upstairrule[1] -= tocut
-        #dodatak
         return tocut
 
     def downsizehs(self):
@@ -425,7 +440,7 @@ class ParseText:
     #@resetfileds
     @tryit
     def parse(self, tokenList):
-        #posle smanjenja x je za jedan visi nekako:/
+        #TODO get rid of the need for cushion node
 
         listapravila = grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
         #ovde provera da li je dosao i do kraja pravila
@@ -519,7 +534,7 @@ class ParseText:
                     self.uphelperstack()
                     #da li je presao jednu listu pravila , ako jeste i ako na cacastack-u ima vise od jednog
                     if self.gdejestao[self.cacastack[-1]][-1][0] == len(listapravila):
-                        if len(self.cacastack) > 1:
+                        if len(self.cacastack) > 1: #reason for cushion!
                             #ne moze da se vrati skroz do kraja , tj moze samo do expr
                             if len(self.gdejestao[self.cacastack[-1]]) > 1:
                                 poslednji = self.gdejestao[self.cacastack[-1]].pop()
@@ -573,7 +588,7 @@ class ParseText:
                             self.x -= self.removefromhs()
                         self.x -= self.downsizehs()  #ovde mora da poizbacuje sve do cacastacka
                         #zameni mesta del sa self.cacastack-a i 467 i mosdef obrisati poslednji sa gde je stao stacka-a
-                        self.gdejestao[self.cacastack[-1]][-1][2] = 0
+                        self.gdejestao[self.cacastack[-1]][-1][2] = 0 #da li obrisati ovo?
                         # i ovde takodje smanji izbacene
                         del self.gdejestao[self.cacastack[-1]][-1]
                         self.izbaceni[self.cacastack[-1]][0] -= 1
@@ -644,7 +659,7 @@ def mergeall(izbaceni, gdejestao):
 #p.gdejestao i trace , pogledaj razlike tj da li ih ima
 class AST(object):
     def __init__(self, tokenlist, trace):
-        self.stack = [ExprNode()]
+        self.stack = [BaseExprNode()]
         self.stack2 = []
         self.dek = deque(tokenlist)
         self.trace = trace
@@ -684,6 +699,12 @@ class AST(object):
             else:
                 self.dek.popleft()
 
+class SymboleTable(object):
+    def __init__(self):
+        self.table = dict()
+
+
+
 
 p = ParseText()
 print p.parse(tokenList)
@@ -691,7 +712,7 @@ print p.gdejestao
 print "**************"
 
 ast = AST(tokenList, p.gdejestao)
-ast.createtree("expr")
+ast.createtree("baseexpr")
 print ast.stack2[0]
 print ast.stack2[0].dooperation(), "e ovo vraca"
 

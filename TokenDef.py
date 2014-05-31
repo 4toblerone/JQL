@@ -36,6 +36,14 @@ def t_JSONSTRING_end(token):
     token.lexer.is_raw = False
     return token
 
+def t_LCURLYB(token):
+    r'\{'
+    return token
+
+def t_RCURLYB(token):
+    r'\}'
+    return token
+
 def t_COMMA(token):
     r','
     return token
@@ -93,9 +101,17 @@ def t_WHERE(token):
   r'where'
   return token
 
+def t_VAR(token):
+    r'var'
+    return token
+
 def t_TO(token):
   r'to'
   return token
+
+def t_ADD(token):
+    r'add'
+    return token
 
 def t_AND(token):
   r'and'
@@ -168,7 +184,9 @@ tokens = [
           'WHERE',
           'GET',
           'UPDATE',
+          'VAR',
           'TO',
+          'ADD',
           'AND'
           ] + list(predicate.values())
 
