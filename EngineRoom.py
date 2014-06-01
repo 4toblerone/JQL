@@ -35,17 +35,18 @@ class LeafNode(Node):
         self.token = token
 
     def dooperation(self):
-        return self.token
+        return self.token.value
 
 
 class BaseExprNode(Node):
     def dooperation(self):
         print "BaseExpr"
-        return
+        return self.childrens[0].dooperation()
 
 class StrongExprNode(Node):
     def dooperation(self):
-        pass
+        print "StrongExpr"
+        return self.childrens[0].dooperation()
 
 class ExprNode(Node):
     def dooperation(self):
@@ -72,17 +73,37 @@ class AddExprNode(Node):
     def dooperation(self,jsonstring = json_loaded):
         #get object or objects to which you have to add new json object
         path_to_objects = self.childrens[0].dooperation()[0]
-        conditions = self.childrensp[0].dooperation()[1]
+        conditions = self.childrens[0].dooperation()[1]
         objects = getjsonobject(path_to_objects,jsonstring,conditions)
         to_add = self.childrens[1].dooperation()
-        json.loads(to_add)
-        for object in objects:
-            pass
-
+        #transform to_add from string to json
+        #check for json input validity
+        #input can be new dict , adding to list {"key":"value}
+        #or it can be simple addition to existing dict as "key":"value"
+        try:
+            to_add_json = json.loads(to_add)
+        except ValueError:
+            raise ValueError('Couldn\'t transform input string into json')
+        if type(objects) is list and conditions is None:
+            objects.append(to_add_json)
+        else:
+            for obj in objects:
+                for key in to_add_json.keys():
+                    obj[key] = to_add_json[key]
+       
+        return jsonstring
 
 
 class UpdateExprNode(Node):
-    pass
+    def dooperation(self,jsonsting = json_loaded):
+        print "updateexpr"
+        path_to_objects = self.childrens[0].dooperation()[0]
+        conditions = self.childrensp[0].dooperation()[1]
+        objects = getjsonobject(path_to_objects,jsonstring,conditions)#this ain't gonna work cuz json is not gonna change
+        to_update_with = self.childrens[1].dooperation()
+        for obj in objects:
+            obj = to_update_with
+        return jsonstring
 
 
 class GetExprNode(Node):
@@ -304,7 +325,9 @@ def createleaf(rule, tokenvalue):
     return leafnode
 
 
-nodes = {"expr": "ExprNode",
+nodes = {"baseexpr" : "BaseExprNode",
+         "strongexpr":"StrongExprNode",
+         "expr": "ExprNode",
          "queryexpr": "QueryNode",
          "removeexpr": "RemoveExprNode",
          "addexpr": "AddExprNode",
@@ -369,7 +392,7 @@ grammar = {"baseexpr" : [["strongexpr"]],
 
 #tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+ 7 and 7 + 7 edeste 7+7 ")
 #tokenList = Lexer().breakDownStringToTokens("from nekibojekat->nekarec get nekidrugiobjeat->nestonesto where nesto == nesto and nesto == nesto ")
-tokenList = Lexer().breakDownStringToTokens("to sale->items where id == prvi add 'nekistring'")
+tokenList = Lexer().breakDownStringToTokens("to sale->items where id == prvi add '{\"nekistring\" : \"drugistring\"}'")
 print tokenList
 #self.izbaceni={}
 
@@ -679,12 +702,11 @@ class AST(object):
                     #if it isn't in nodes just skip it
                     #make sure that nodes contains
                     print "dek", self.dek
-                    self.stack[-1].add(createleaf(pravilo, self.dek.popleft()))  #pop stack2, i kopiraj listu tokena
+                    self.stack[-1].add(createleaf(pravilo, self.dek.popleft()))
                     if index == len(grammar[key][rulenum]) - 1 and len(self.stack) > 1:
                         self.stack.pop()
                         del self.trace[key][0]
                 else:
-                    #print"yo",pravilo
                     node = createnode(nodes[pravilo])
                     self.stack[-1].add(node)
                     if index == len(grammar[key][rulenum]) - 1:
@@ -716,8 +738,12 @@ ast.createtree("baseexpr")
 print ast.stack2[0]
 print ast.stack2[0].dooperation(), "e ovo vraca"
 
-for each in ast.stack2[0].dooperation():
-    print each["ime"]
+obj = getjsonobject(["sale","kolikijecar"],json_loaded)
+print obj
+obj = "josveci"
+print obj ,json_loaded
+#for each in ast.stack2[0].dooperation():
+    #print each["ime"]000000----------0000000000000000000000000000000000000000000
     #print json.loads(jsonstring1)
     # print ast.stack2[0].dooperation(),"printaj listu"
     # # print ast.stack2[0].childrens[0].childrens[1].dooperation()
