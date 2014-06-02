@@ -7,6 +7,7 @@ import json
 jsonstring = '{"sale":{"kolikijecar":"veliki" , "items" : [{"id" : "prvi" , "ime" : "Sale"},{"id":"drugi","ime" : "Car"}]}}'
 json_loaded = json.loads(jsonstring)
 
+
 class Node(object):
     """docstring for Node"""
 
@@ -43,10 +44,12 @@ class BaseExprNode(Node):
         print "BaseExpr"
         return self.childrens[0].dooperation()
 
+
 class StrongExprNode(Node):
     def dooperation(self):
         print "StrongExpr"
         return self.childrens[0].dooperation()
+
 
 class ExprNode(Node):
     def dooperation(self):
@@ -62,19 +65,20 @@ class QueryNode(Node):
 class RemoveExprNode(Node):
     #TODO at end of dooperation replace original json file with one from removeexpr
     #TODO figure out what should you return at and of it, cuz' node above requires something
-    def dooperation(self, jsonstring = json_loaded):
+    def dooperation(self, jsonstring=json_loaded):
         print "Remove expression"
         path_to_object = self.childrens[0].dooperation()
         what_to_delete = self.childrens[1].dooperation()
-        print delete_from_json(path_to_object,jsonstring,what_to_delete[0],what_to_delete[1])
+        print delete_from_json(path_to_object, jsonstring, what_to_delete[0], what_to_delete[1])
 
 
 class AddExprNode(Node):
-    def dooperation(self,jsonstring = json_loaded):
+    #TODO at end of dooperation replace original json file with one from removeexpr
+    def dooperation(self, jsonstring=json_loaded):
         #get object or objects to which you have to add new json object
         path_to_objects = self.childrens[0].dooperation()[0]
         conditions = self.childrens[0].dooperation()[1]
-        objects = getjsonobject(path_to_objects,jsonstring,conditions)
+        objects = getjsonobject(path_to_objects, jsonstring, conditions)
         to_add = self.childrens[1].dooperation()
         #transform to_add from string to json
         #check for json input validity
@@ -90,19 +94,21 @@ class AddExprNode(Node):
             for obj in objects:
                 for key in to_add_json.keys():
                     obj[key] = to_add_json[key]
-       
         return jsonstring
 
 
 class UpdateExprNode(Node):
-    def dooperation(self,jsonsting = json_loaded):
+    def dooperation(self, jsonstring=json_loaded):
+        #TODO see if it's ok to transforem getjsonobject to generator
         print "updateexpr"
         path_to_objects = self.childrens[0].dooperation()[0]
-        conditions = self.childrensp[0].dooperation()[1]
-        objects = getjsonobject(path_to_objects,jsonstring,conditions)#this ain't gonna work cuz json is not gonna change
+        conditions = self.childrens[0].dooperation()[1]
+        objects = getjsonobject(path_to_objects, jsonstring, conditions)  #this ain't gonna work cuz json is not gonna change, due to immutability of strings
+        objects = jsonstring["sale"]["items"]
         to_update_with = self.childrens[1].dooperation()
-        for obj in objects:
-            obj = to_update_with
+        for index , obj in enumerate(objects):
+            objects[index] = to_update_with
+
         return jsonstring
 
 
@@ -183,6 +189,7 @@ class StringExprNode(Node):
 class ComparisonOpNode(Node):
     def dooperation(self):
         return self.childrens[0].dooperation()
+
 
 class EqualNode(LeafNode):
     def dooperation(self):
@@ -276,7 +283,7 @@ def getjsonobject(paramlist, loaded_json_string, conditions=None, func=None):
         If path to it is not valid a.k.a object doesn't exists
         it will return None"""
     #TODO refactor this method , so it will use func(which can be append or del) instead append
-
+    #TODO refactor it so it will become generator and thus make result redundant
     jsonobject = reduce(dict.get, paramlist, loaded_json_string)
     if conditions is not None:
         result = []
@@ -291,7 +298,7 @@ def getjsonobject(paramlist, loaded_json_string, conditions=None, func=None):
         return jsonobject
 
 
-def delete_from_json(path_to_object,json_object, what_to_delete, conditions=None):
+def delete_from_json(path_to_object, json_object, what_to_delete, conditions=None):
     """
 
     :rtype : dict
@@ -325,8 +332,8 @@ def createleaf(rule, tokenvalue):
     return leafnode
 
 
-nodes = {"baseexpr" : "BaseExprNode",
-         "strongexpr":"StrongExprNode",
+nodes = {"baseexpr": "BaseExprNode",
+         "strongexpr": "StrongExprNode",
          "expr": "ExprNode",
          "queryexpr": "QueryNode",
          "removeexpr": "RemoveExprNode",
@@ -341,8 +348,7 @@ nodes = {"baseexpr" : "BaseExprNode",
          "jsonstring": "JsonStringNode",
          "mathexpr": "MathExprNode",
          "stringexpr": "StringExprNode",
-         "baseexpr" : "BaseExprNode",
-         "variable" : "VariableNode",
+         "variable": "VariableNode",
 
          "comparisonop": "ComparisonOpNode",
          "less": "LessNode",
@@ -350,7 +356,7 @@ nodes = {"baseexpr" : "BaseExprNode",
          "lessorequal": "LessOrEqualNode",
          "equalorgreater": "EqualOrGreaterNode",
          "twoequal": "TwoEqualNode",
-         "equal" : "EqualNode",
+         "equal": "EqualNode",
 
          "word": "WordNode",
          "number": "NumberNode",
@@ -364,15 +370,15 @@ nodes = {"baseexpr" : "BaseExprNode",
 
 
 #there is a need for "cushion" node
-grammar = {"baseexpr" : [["strongexpr"]],
-           "strongexpr" : [["variable","equal", "lcurlyb", "expr","rcurlyb"],["expr"]],#fix this shit
+grammar = {"baseexpr": [["strongexpr"]],
+           "strongexpr": [["variable", "equal", "lcurlyb", "expr", "rcurlyb"], ["expr"]],  #fix this shit
            "expr": [["queryexpr"], ["mathexpr"], ["stringexpr"]],
-           "variable" : [["var","word"]],
+           "variable": [["var", "word"]],
            "queryexpr": [["removeexpr"], ["addexpr"], ["updateexpr"], ["getexpr"]],
            "removeexpr": [["from", "object", "remove", "wut"]],
            "getexpr": [["from", "object", "get", "wut"]],
            "addexpr": [["to", "wut", "add", "jsonstring_start", "jsonstring", "jsonstring_end"]],
-           "updateexpr": [["update", "wut", "to", "value"]],
+           "updateexpr": [["update", "wut", "to", "jsonstring_start", "jsonstring", "jsonstring_end"]],
            "object": [["word", "arrow", "object"], ["word"]],
            "condition": [["basiccondition", "and", "condition"], ["basiccondition"]],
            "basiccondition": [["object", "comparisonop", "value"]],
@@ -392,7 +398,8 @@ grammar = {"baseexpr" : [["strongexpr"]],
 
 #tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+ 7 and 7 + 7 edeste 7+7 ")
 #tokenList = Lexer().breakDownStringToTokens("from nekibojekat->nekarec get nekidrugiobjeat->nestonesto where nesto == nesto and nesto == nesto ")
-tokenList = Lexer().breakDownStringToTokens("to sale->items where id == prvi add '{\"nekistring\" : \"drugistring\"}'")
+#tokenList = Lexer().breakDownStringToTokens("to sale->items where id == prvi add '{\"nekistring\" : \"drugistring\"}'")
+tokenList = Lexer().breakDownStringToTokens("update sale->items where id == prvi to '{\"hejovoje\":\"nestonovo\"}'")
 print tokenList
 #self.izbaceni={}
 
@@ -417,22 +424,21 @@ def tryit(func):
 
     return wrapit
 
+
 class ParseText:
     def __init__(self):
         self.cacastack = ['baseexpr']
         self.helperstack = [['baseexpr', 0]]
         self.gdejestao = {'baseexpr': [[0, 0,
-                                    0]]}  #3. int sluzi za broja tokena tj da bi se znalo koliko unazad da se vrati u slucaju da ne naidje na odgvarajuce pravilo
+                                        0]]}  #3. int sluzi za broja tokena tj da bi se znalo koliko unazad da se vrati u slucaju da ne naidje na odgvarajuce pravilo
         #2. int oznacava odabrano prailo
         #sta je 1. predjeno pravilo u ovom slucaju token , tj pomeraj u pravilo listi
         self.gdejebio = [createnode(nodes["baseexpr"])]
         self.x = 0
         self.izbaceni = {}
 
-
     def addnewtohs(self, pravilo):
         self.helperstack.append([pravilo, 0])
-
 
     def uphelperstack(self):
         for upstairrule in self.helperstack:
@@ -557,7 +563,7 @@ class ParseText:
                     self.uphelperstack()
                     #da li je presao jednu listu pravila , ako jeste i ako na cacastack-u ima vise od jednog
                     if self.gdejestao[self.cacastack[-1]][-1][0] == len(listapravila):
-                        if len(self.cacastack) > 1: #reason for cushion!
+                        if len(self.cacastack) > 1:  #reason for cushion!
                             #ne moze da se vrati skroz do kraja , tj moze samo do expr
                             if len(self.gdejestao[self.cacastack[-1]]) > 1:
                                 poslednji = self.gdejestao[self.cacastack[-1]].pop()
@@ -611,7 +617,7 @@ class ParseText:
                             self.x -= self.removefromhs()
                         self.x -= self.downsizehs()  #ovde mora da poizbacuje sve do cacastacka
                         #zameni mesta del sa self.cacastack-a i 467 i mosdef obrisati poslednji sa gde je stao stacka-a
-                        self.gdejestao[self.cacastack[-1]][-1][2] = 0 #da li obrisati ovo?
+                        self.gdejestao[self.cacastack[-1]][-1][2] = 0  #da li obrisati ovo?
                         # i ovde takodje smanji izbacene
                         del self.gdejestao[self.cacastack[-1]][-1]
                         self.izbaceni[self.cacastack[-1]][0] -= 1
@@ -721,11 +727,10 @@ class AST(object):
             else:
                 self.dek.popleft()
 
+
 class SymboleTable(object):
     def __init__(self):
         self.table = dict()
-
-
 
 
 p = ParseText()
@@ -738,26 +743,26 @@ ast.createtree("baseexpr")
 print ast.stack2[0]
 print ast.stack2[0].dooperation(), "e ovo vraca"
 
-obj = getjsonobject(["sale","kolikijecar"],json_loaded)
+obj = getjsonobject(["sale", "kolikijecar"], json_loaded)
 print obj
 obj = "josveci"
-print obj ,json_loaded
+print obj, json_loaded
 #for each in ast.stack2[0].dooperation():
-    #print each["ime"]000000----------0000000000000000000000000000000000000000000
-    #print json.loads(jsonstring1)
-    # print ast.stack2[0].dooperation(),"printaj listu"
-    # # print ast.stack2[0].childrens[0].childrens[1].dooperation()
-    # #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
+#print each["ime"]000000----------0000000000000000000000000000000000000000000
+#print json.loads(jsonstring1)
+# print ast.stack2[0].dooperation(),"printaj listu"
+# # print ast.stack2[0].childrens[0].childrens[1].dooperation()
+# #napravi tree walker metodu , tj interpretera koja ce da obidje celo stablo pozivajuci dooperation
 
 
 
 
-    # jsonstring='{"dit1":{"dit2":{"ime":"sale" , "titula" :[{"car":"gospodar","lastname":"univer"},{"car":"eee","lastname":"sveta
-    # print getjsonobject(["sale"], json.loads(jsonstring1)),"fdsdsfsdfsdfdsfsd"
+# jsonstring='{"dit1":{"dit2":{"ime":"sale" , "titula" :[{"car":"gospodar","lastname":"univer"},{"car":"eee","lastname":"sveta
+# print getjsonobject(["sale"], json.loads(jsonstring1)),"fdsdsfsdfsdfdsfsd"
 
-    # #jsonstring = '{"employees": [{ "firstName":"John" , "lastName":"Doe" }, { "firstName":"Anna" , "lastName":"Smith" },]}'
-    # conditions = [(["car"], operator.le ,"ee")]
-    # a = getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring),conditions)
+# #jsonstring = '{"employees": [{ "firstName":"John" , "lastName":"Doe" }, { "firstName":"Anna" , "lastName":"Smith" },]}'
+# conditions = [(["car"], operator.le ,"ee")]
+# a = getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring),conditions)
 
-    # print a,"bravo"
-    #print getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring), conditions) , "printaj"
+# print a,"bravo"
+#print getjsonobject(["dit1","dit2","titula"], json.loads(jsonstring), conditions) , "printaj"
