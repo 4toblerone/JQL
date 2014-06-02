@@ -41,19 +41,19 @@ class LeafNode(Node):
 
 class BaseExprNode(Node):
     def dooperation(self):
-        print "BaseExpr"
+        #print "BaseExpr"
         return self.childrens[0].dooperation()
 
 
 class StrongExprNode(Node):
     def dooperation(self):
-        print "StrongExpr"
+        #print "StrongExpr"
         return self.childrens[0].dooperation()
 
 
 class ExprNode(Node):
     def dooperation(self):
-        print "Expr "
+        #print "Expr "
         return self.childrens[0].dooperation()
 
 
@@ -731,11 +731,10 @@ class SymboleTable(object):
 
 
 
-#tokenList = Lexer().breakDownStringToTokens("to sale->items where id == prvi add '{\"nekistring\" : \"drugistring\"}'")
-def test():
-    print "***************UPDATE TEST***************"
-    print "query: update sale->items where id == prvi to '{\"hejovoje\":\"nestonovo\"}'"
-    tokenList = Lexer().breakDownStringToTokens("update sale->items where id == prvi to '{\"hejovoje\":\"nestonovo\"}'")
+tokenList1 = Lexer().breakDownStringToTokens("to sale->items where id == prvi add '{\"nekistring\" : \"drugistring\"}'")
+tokenList = Lexer().breakDownStringToTokens("update sale->items where id == prvi to '{\"hejovoje\":\"nestonovo\"}'")
+def test(tokenList):
+    print "***************TEST***************"
     print "provera da li je upit u sladu sa gramatikom jezika tj. da li je sintaksno ispravan"
     p = ParseText()
     p.parse(tokenList)
@@ -744,20 +743,13 @@ def test():
     ast = AST(tokenList, p.gdejestao)
     ast.createtree("baseexpr")
     print "..."
+    print "json string pre prebacivanja u py dictionary i upita nad njim" , jsonstring
     print "izvrsavanje koda..."
     print ast.stack2[0].dooperation()
-    print "originalni json ", jsonstring
-    print "gotovo"
+    print "originalni json "
+    print jsonstring
 
-test()
 
-"""p = ParseText()
-print p.parse(tokenList)
-print p.gdejestao
-print "**************"
 
-ast = AST(tokenList, p.gdejestao)
-ast.createtree("baseexpr")
-print ast.stack2[0]
-print ast.stack2[0].dooperation(), "e ovo vraca"
-"""
+test(tokenList1)
+
