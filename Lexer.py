@@ -1,28 +1,32 @@
-import lex 
+import lex
 import TokenDef
 
 
 class Lexer(object):
+
     '''
     classdocs
     '''
-
 
     def __init__(self):
         '''
         Constructor
         '''
-    def breakDownStringToTokens(self,text):
-        lexer = lex.lex(module = TokenDef)
+
+    @staticmethod
+    def breakDownStringToTokens(text):
+        lexer = lex.lex(module=TokenDef)
         lexer.input(text)
         tokenList = []
         while True:
             tok = lexer.token()
-            if not tok: break
+            if not tok:
+                break
             tokenList.append(tok)
-        return tokenList 
+        return tokenList
         """for sometoken in tokenList:
-            print sometoken.type """        
+            print sometoken.type """
 
-proba = Lexer()        
-print proba.breakDownStringToTokens("{var } 1 select dele ' neki string' < > fdsa -> remove from <= => = == = get where and add fdsfsd")
+#proba = Lexer()
+# print proba.breakDownStringToTokens("{var } 1 select dele ' neki string'
+# < > fdsa -> remove from <= => = == = get where and add fdsfsd")
