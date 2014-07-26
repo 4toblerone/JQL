@@ -1,17 +1,7 @@
 import lex
 import TokenDef
-from collections import deque  # , Iterable
-#import operator
-import json
+from collections import deque  
 
-
-# jsonstring = '{"tim":{"nazivtima":"BobRock" , "igraci" : [{"id" : "prvi" , "ime" : "Sale"},{"id":"drugi","ime" : "Dzoni"}]}}'
-# jsonstring  = '{ "tim" : {"nazivtima" : "BobRock", "igraci" : [{"ime":"Demijan", "broj_patika":"47", "dat_rodj" : "1988" },{"ime":"Dzoni", "broj_patika":"45", "dat_rodj" : "1987"},{"ime":"aba", "broj_patika":"47", "dat_rodj" : "1988"}]}}'
-# json_loaded = json.loads(jsonstring)
-#tokenList = Lexer().breakDownStringToTokens(" 7 + 7 and 7+ 7 and 7 + 7 edeste 7+7 ")
-#tokenList = Lexer().breakDownStringToTokens("from nekibojekat->nekarec get nekidrugiobjeat->nestonesto where nesto == nesto and nesto == nesto ")
-#tokenList = Lexer().breakDownStringToTokens("to sale->items where id == prvi add '{\"nekistring\" : \"drugistring\"}'")
-#tokenList = Lexer().breakDownStringToTokens("update sale->items where id == prvi to '{\"hejovoje\":\"nestonovo\"}'")
 
 def breakDownStringToTokens(text):
         lexer = lex.lex(module=TokenDef)
@@ -48,9 +38,8 @@ def resetfileds(fn):
 
     return wrapper
 
+
 # TODO do proper exception on this
-
-
 def tryit(func):
     """Decorator which encloses every other exception 
        and raises SyntaxException"""
@@ -63,7 +52,6 @@ def tryit(func):
 
 
 class SyntaxException(Exception):
-
     """"""
 
     def __init__(self, message):
@@ -401,30 +389,5 @@ class AST(object):
                 self.dek.popleft()
 
 
-tokenList1 = breakDownStringToTokens(
-    "to sale->items where id == prvi add '{\"nekistring\" : \"drugistring\"}'")
-tokenList = breakDownStringToTokens(
-    "update sale->items where id == prvi to '{\"hejovoje\":\"nestonovo\"}'")
-
-gramatika = {"expr": [["number", "plus", "number"]]}
-#do_it("to tim->igraci where id == prvi add '{\"Novi atribut\" : \"I njegov kljuc\"}'")
-#do_it("update tim->igraci where id == prvi to '{\"hej ovo je\":\"nesto novo\"}'")
-#do_it("from tim get igraci where id == prvi")
-
-
-def do_it(query):
-
-    token_list = breakDownStringToTokens(query)
-    parser = ParseText()
-    if parser.parse(token_list):
-        ast = AST(token_list, parser.gdejestao)
-        ast.createtree("baseexpr")
-        print "json string before running JQL query :"
-        # print jsonstring
-        print "code execution..."
-        print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
-
-
 if __name__ == '__main__':
-    print  "yodasdsa"
-    4+4
+   print "e desi"

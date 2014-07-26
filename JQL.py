@@ -1,8 +1,8 @@
 import operator
 import json
 from collections import Iterable
-from EngineRoom import AST, ParseText,createnode,createleaf
-from Lexer import Lexer
+from EngineRoom import AST, ParseText,breakDownStringToTokens
+
 
 jsonstring = '{"tim":{"nazivtima":"BobRock" , "igraci" : [{"id" : "prvi" , "ime" : "Sale"},{"id":"drugi","ime" : "Dzoni"}]}}'
 json_loaded = json.loads(jsonstring)
@@ -383,16 +383,25 @@ grammar = {"baseexpr": [["strongexpr"]],
            "stringexpr": [[]],
 }
 
-def __main__():
-   print "fsd"
-   print "ovo je nesto"
+
+def do_it(query):
+
+    token_list = breakDownStringToTokens(query)
+    parser = ParseText(grammar,"baseexpr")
+    if parser.parse(token_list):
+        ast = AST(token_list, parser.gdejestao)
+        ast.createtree("baseexpr")
+        print "json string before running JQL query :"
+        # print jsonstring
+        print "code execution..."
+        print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
+    else:
+        print "pederu"
 
 
-print "yo"
-p = ParseText(grammar, "baseexpr")
-tokenlist = Lexer.breakDownStringToTokens("from tim remove igraci where id == prvi")
-print tokenlist, "lista tokena"
-print p.parse(tokenlist)
+#do_it("to tim->igraci where id == prvi add '{\"Novi atribut\" : \"I njegov kljuc\"}'")
+#do_it("update tim->igraci where id == prvi to '{\"hej ovo je\":\"nesto novo\"}'")
+#do_it("from tim get igraci where id == prvi")
 
 if __name__ == '__main__':
-    __main__()
+    do_it("query")
