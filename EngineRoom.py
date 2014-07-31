@@ -118,7 +118,7 @@ class ParseText:
     # what if token type defined doesn't exists in grammar dict?
     # add position 'x' of the token i token list so user can
     # have information where exception occured
-    # What about context menager? Ain't gonna work.
+    # What about context menager? Ain't gonna work
     #@resetfileds doesn't work cuz of recursion
     @tryit
     def parse(self, tokenList):
