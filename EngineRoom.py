@@ -31,8 +31,8 @@ def createleaf(rule, tokenvalue):
 def resetfileds(fn):
     """Decorator for reseting object's fields"""
 
-    def wrapper(self, arg):
-        result = fn(self, arg)
+    def wrapper(self, *args):
+        result = fn(self, *args)
         self.__init__()
         return result
 
@@ -45,9 +45,14 @@ def tryit(func):
        and raises SyntaxException"""
     def wrapit(*args):
         try:
-            return func(*args)
-        except:
+            #return func(*args)
+            print "NESTO RADI"
+            if func(*args) == True:
+                print "ZAVRSIO"
+        except Exception as e:
             raise SyntaxException("Code is not syntactically correct!")
+        finally:
+            print "finali"
     return wrapit
 
 
@@ -110,7 +115,11 @@ class ParseText:
         self.gdejestao[self.cacastack[-1]][-1][2] = 0
 
     # TODO get rid of the need for cushion node
-    #@resetfileds
+    # what if token type defined doesn't exists in grammar dict?
+    # add position 'x' of the token i token list so user can
+    # have information where exception occured
+    # What about context menager? Ain't gonna work.
+    #@resetfileds doesn't work cuz of recursion
     @tryit
     def parse(self, tokenList):
         """Checks if given stream of tokens can be 
@@ -127,13 +136,11 @@ class ParseText:
                 self.cacastack.pop()
                 return self.parse(tokenList)
             elif len(tokenList) > self.x:
-                # print self.cacastack, self.gdejestao, self.gdejebio
                 return False
         # da li je presao sve tokene u listi, ako jeste
         if self.x == len(tokenList):
             if len(self.cacastack) == 1:
                 self.gdejestao = mergeall(self.izbaceni, self.gdejestao)
-                # print "stae ovo", self.gdejestao
                 return True
             else:
                 # proveri da li ima jos listi pravila, ako ima prebaci na
@@ -149,6 +156,7 @@ class ParseText:
                         self.x -= self.removefromhs()
                     self.move_forward()
                     return self.parse(tokenList)
+
                 if self.gdejestao[self.cacastack[-1]][-1][0] == len(
                         self.grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]) - 1:
                     if len(self.cacastack) > 1:
@@ -196,12 +204,8 @@ class ParseText:
                 return False
         for index, pravilo in enumerate(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]):
             # proveri da li je list/terminal i da li je jednak tipu tokena
-            # self.gdejebio.append(pravilo)
-            # and pravilo==tokenList[x].type:
             if pravilo not in self.grammar.keys():
                 # za svaki sledeci pomeri pokazivac
-                # mora posle ovo jer se na 81 liniji gleda nova verzija a ne
-                # treba
                 self.gdejestao[self.cacastack[-1]][-1][0] += 1
                 # znaci da je list, proveri da li je to taj tip tokena (vodi
                 # racuna na velika/mala slova)
@@ -224,9 +228,7 @@ class ParseText:
                             # self.deletelasths()
                             return self.parse(tokenList)
                         else:
-                            # print "trece"
                             return False
-                            # print "436"
                 elif self.x <= len(tokenList) - 1 and pravilo != tokenList[self.x].type.lower():
                     if len(self.grammar[self.cacastack[-1]]) - 1 > self.gdejestao[self.cacastack[-1]][-1][1]:
                         # print "da li je i ovde usao a trebalo bi", self.x
@@ -251,10 +253,8 @@ class ParseText:
                             # poslednjeg sa gdejestao+self.izbaceni stacka
                         self.x -= self.downsizehs()
                         self.gdejestao[self.cacastack[-1]][-1][2] = 0
-                        # print self.x
                         # del self.gdejestao[self.cacastack[-1]][-1]   #baca out ouf range na 87 i ovde je problem
                         # i ovde smanji za jedan u self.izbacenima
-                        # self.izbaceni[self.cacastack[-1]][0]-=1
                         return self.parse(tokenList)
                     elif len(self.cacastack) > 1:
                         while self.helperstack[-1][0] is not self.cacastack[-1]:
@@ -282,7 +282,6 @@ class ParseText:
                             self.move_forward()
                             # downsize sve na helperstacku za onoliko koliko ima na poslednjem,
                             # s tim da ne treba obrisati poslednji
-                            # self.x-=self.removefromhs()
                             self.x -= self.downsizehs()
                             self.deletelasths()
                         else:
@@ -326,7 +325,6 @@ def mergeall(izbaceni, gdejestao):
             elif len(gdejestaodeo) > 0:
                 lista.append(gdejestaodeo[0])
                 del gdejestaodeo[0]
-            # dodataks
             else:
                 lista.append(popeditems[0][1])
                 del popeditems[0]
