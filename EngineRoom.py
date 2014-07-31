@@ -45,10 +45,7 @@ def tryit(func):
        and raises SyntaxException"""
     def wrapit(*args):
         try:
-            #return func(*args)
-            print "NESTO RADI"
-            if func(*args) == True:
-                print "ZAVRSIO"
+            func(*args)
         except Exception as e:
             raise SyntaxException("Code is not syntactically correct!")
         finally:
