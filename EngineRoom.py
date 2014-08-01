@@ -72,14 +72,19 @@ class ParseText:
         start_nonterminal -- grammar's start symbol/nonterminal 
         """
         self.grammar = grammar
-        self.cacastack = [start_nonterminal]
-        self.helperstack = [[start_nonterminal, 0]]
-        self.gdejestao = {start_nonterminal: [[0, 0, 0]]}
+        self.start_nonterminal = start_nonterminal
+        #self._initialize(start_nonterminal)
+    
+        
+    def _initialize(self):
+        #self.start_nonterminal = start_nonterminal
+        self.cacastack = [self.start_nonterminal]
+        self.helperstack = [[self.start_nonterminal, 0]]
+        self.gdejestao = {self.start_nonterminal: [[0, 0, 0]]}
         # 3. int sluzi za broja tokena tj da bi se znalo koliko unazad
         # da se vrati u slucaju da ne naidje na odgvarajuce pravilo
         # 2. int oznacava odabrano prailo
         # sta je 1. predjeno pravilo u ovom slucaju token , tj pomeraj u pravilo listi
-        #self.gdejebio = [createnode(nodes[start_nonterminal])]
         self.x = 0
         self.izbaceni = {}
 
@@ -111,14 +116,27 @@ class ParseText:
         self.gdejestao[self.cacastack[-1]][-1][0] = 0
         self.gdejestao[self.cacastack[-1]][-1][2] = 0
 
+    def parse(self, tokenList):
+        self._initialize()
+        try:
+            return self._validate(tokenList)
+        except Exception:
+            #raise SyntaxException("Not madafakin valid!")
+            return False
+        finally:
+            print "doin dis shiat"
+            #this ain't gonna work cuz we need self.gdejestao
+            #to build , so this should be before try/except
+            #self._initialize(self.start_nonterminal)
+
     # TODO get rid of the need for cushion node
     # what if token type defined doesn't exists in grammar dict?
     # add position 'x' of the token i token list so user can
     # have information where exception occured
     # What about context menager? Ain't gonna work
     #@resetfileds doesn't work cuz of recursion
-    @tryit
-    def parse(self, tokenList):
+    #@tryit , replaced by putting it in proper parse method
+    def _validate(self, tokenList):
         """Checks if given stream of tokens can be 
         generated from a given grammar. 
 
@@ -131,7 +149,7 @@ class ParseText:
         if len(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]) == 0:
             if len(self.cacastack) > 1:
                 self.cacastack.pop()
-                return self.parse(tokenList)
+                return self._validate(tokenList)
             elif len(tokenList) > self.x:
                 return False
         # da li je presao sve tokene u listi, ako jeste
@@ -152,7 +170,7 @@ class ParseText:
                             self.izbaceni[self.helperstack[-1][0]][0] -= 1
                         self.x -= self.removefromhs()
                     self.move_forward()
-                    return self.parse(tokenList)
+                    return self._validate(tokenList)
 
                 if self.gdejestao[self.cacastack[-1]][-1][0] == len(
                         self.grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]) - 1:
@@ -166,7 +184,7 @@ class ParseText:
                                 (self.izbaceni[self.cacastack[-1]][0], poslednji))
                             #del self.gdejestao[self.cacastack[-1]][-1]
                         self.cacastack.pop()
-                        return self.parse(tokenList)
+                        return self._validate(tokenList)
                 return False
         # ako je na pocetku odredjene grupe pravila (jedno pravilo moze da ima vise grupa pravila)
         # i ako je duzina te grupe pravila veca oda broja preostalih tokena
@@ -180,7 +198,7 @@ class ParseText:
                 # ovde izbrisi sa gdejebio poslednji i obrisi decu njegovog
                 # caleta
                 self.x -= self.downsizehs()
-                return self.parse(tokenList)
+                return self._validate(tokenList)
             # ukoliko cacastack predzadnji nije na poslednjem pravilu
             elif len(self.cacastack) > 1:
                 # ukoliko je presao sve grupe pravila , obrisi sve sa
@@ -196,7 +214,7 @@ class ParseText:
                     self.x -= self.removefromhs()
                 self.x -= self.downsizehs()
                 self.move_forward()
-                return self.parse(tokenList)
+                return self._validate(tokenList)
             else:
                 return False
         for index, pravilo in enumerate(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]):
@@ -223,7 +241,7 @@ class ParseText:
                                     (self.izbaceni[self.cacastack[-1]][0], poslednji))
                             self.cacastack.pop()
                             # self.deletelasths()
-                            return self.parse(tokenList)
+                            return self._validate(tokenList)
                         else:
                             return False
                 elif self.x <= len(tokenList) - 1 and pravilo != tokenList[self.x].type.lower():
@@ -252,7 +270,7 @@ class ParseText:
                         self.gdejestao[self.cacastack[-1]][-1][2] = 0
                         # del self.gdejestao[self.cacastack[-1]][-1]   #baca out ouf range na 87 i ovde je problem
                         # i ovde smanji za jedan u self.izbacenima
-                        return self.parse(tokenList)
+                        return self._validate(tokenList)
                     elif len(self.cacastack) > 1:
                         while self.helperstack[-1][0] is not self.cacastack[-1]:
                             if len(self.izbaceni[self.helperstack[-1][0]]) > 1 and \
@@ -287,7 +305,7 @@ class ParseText:
                             # grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
                             self.gdejestao[self.cacastack[-1]][-1][0] = len(
                                 self.grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])
-                        return self.parse(tokenList)
+                        return self._validate(tokenList)
                 else:
                     return False
             # ako nije list/terminal nadji listu sa tim key-em u dictionary-u i
@@ -304,7 +322,7 @@ class ParseText:
                 self.izbaceni[pravilo] = self.izbaceni.get(pravilo, [-1])
                 self.izbaceni[pravilo][0] = len(
                     self.gdejestao[pravilo]) + len(self.izbaceni[pravilo]) - 2
-                return self.parse(tokenList)
+                return self._validate(tokenList)
 
 
 def mergeall(izbaceni, gdejestao):

@@ -383,20 +383,27 @@ grammar = {"baseexpr": [["strongexpr"]],
            "stringexpr": [[]],
 }
 
+grammar =  {"baseexpr" : [["andmathop"]],
+                          "andmathop" : [["mathop", "and","andmathop"],["mathop"]],
+                          "mathop": [["number","operator","mathop"],["number"]],
+                          "operator":[["plus"],["minus"]]}
+
 
 def do_it(query):
 
     token_list = breakDownStringToTokens(query)
     parser = ParseText(grammar,"baseexpr")
+    print token_list
     if parser.parse(token_list):
-        ast = AST(token_list, parser.gdejestao)
-        ast.createtree("baseexpr")
+        #parser.parse(["number", "minus", "number", "and","number","plus","number"]):
+        #ast = AST(token_list, parser.gdejestao)
+        #ast.createtree("baseexpr")
         print "json string before running JQL query :"
         # print jsonstring
         print "code execution..."
-        print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
+        #print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
     else:
-        print "pederu"
+        print "nope doin"
 
 
 #do_it("to tim->igraci where id == prvi add '{\"Novi atribut\" : \"I njegov kljuc\"}'")
@@ -404,4 +411,4 @@ def do_it(query):
 #do_it("from tim get igraci where id == prvi")
 
 if __name__ == '__main__':
-    do_it("query")
+    do_it("5 + 5 +")
