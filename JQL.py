@@ -46,7 +46,7 @@ class BaseExprNode(Node):
 
 class AndMathOpNode(Node):
     def dooperation(self):
-        return self.childrens[0].doperation()
+        return self.childrens[0].dooperation()
 
 
 class StrongExprNode(Node):
@@ -238,7 +238,7 @@ class OperatorNode(Node):
 
 class NumberNode(LeafNode):
     def dooperation(self):
-        return self.childrens[0].value
+        return self.token.value
 
 
 class PlusNode(LeafNode):
@@ -262,10 +262,13 @@ class DivideNode(LeafNode):
 
 class MathOpNode(Node):
     def dooperation(self):
-        op_func = self.childrens[1].dooperation()
-        arg_1 = self.childrens[0].dooperation()
-        arg_2 = self.childrens[2].dooperation()
-        return op_func(arg_1,arg_2)
+        if len(self.childrens) == 3:
+            op_func = self.childrens[1].dooperation()
+            arg_1 = self.childrens[0].dooperation()
+            arg_2 = self.childrens[2].dooperation()
+            return op_func(arg_1,arg_2)
+        else:
+            return self.childrens[0].dooperation()
 
 def flatten(listl):
     for element in listl:
@@ -415,7 +418,8 @@ def do_it(query):
         ast = AST(token_list,b,grammar,nodes)
         ast.createtree("baseexpr", parser.gdejestao)
         # print ast.stack2
-        print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
+        #print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
+        print ast.stack2[0].dooperation()
     else:
         print "nope doin"
 

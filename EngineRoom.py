@@ -1,11 +1,11 @@
 import lex
-import sys
 import TokenDef
 from collections import deque  
 
 
-def breakDownStringToTokens(text):
-        lexer = lex.lex(module=TokenDef)
+
+def breakDownStringToTokens(text, module = TokenDef):
+        lexer = lex.lex(module)
         lexer.input(text)
         tokenList = []
         while True:

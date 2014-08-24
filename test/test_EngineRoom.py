@@ -1,11 +1,12 @@
 import unittest
 import os
 import sys
+import data
  
 parpath = os.path.join(os.path.dirname(sys.argv[0]), os.pardir)
 sys.path.insert(0, os.path.abspath(parpath))
 
-from EngineRoom import ParseText, AST
+from EngineRoom import ParseText, AST, breakDownStringToTokens
 from lex import LexToken
 
 class EngineRoomTC(unittest.TestCase):
@@ -16,34 +17,27 @@ class EngineRoomTC(unittest.TestCase):
 
 		testName = self.shortDescription()
 
-		def createTokenList(tokTypes):
-			tokens = []
-			for tt in tokTypes:
-				token = LexToken()
-				token.type = tt
-				token.value = "test" 
-				token.lineno = 0 
-				token.lexpos = 0
-				tokens.append(token)
-			return tokens
+		# def createTokenList(tokTypes):
+		# 	tokens = []
+		# 	for tt in tokTypes:
+		# 		token = LexToken()
+		# 		token.type = tt
+		# 		token.value = "test" 
+		# 		token.lineno = 0 
+		# 		token.lexpos = 0
+		# 		tokens.append(token)
+		# 	return tokens
 			#return [LexToken().type = tt for tt in tokTypes]
-
-		self.grammar =  {"baseexpr" : [["andmathop"]],
-						  "andmathop" : [["mathop", "and","andmathop"],["mathop"]],
-						  "mathop": [["number","operator","mathop"],["number"]],
-						  "operator":[["plus"],["minus"]]}
-
-		typesOne = ["number", "minus", "number", "and","number","plus","number"]
-		self.tokenListOne = createTokenList(typesOne)
-		
+		self.tokenListOne = breakDownStringToTokens("5 + 5 + 5 + 5", module = data)
+		#typesOne = ["number", "minus", "number", "and","number","plus","number"]
+		#self.tokenListOne = createTokenList(typesOne)
 		if testName == "parse test":
-			typesTwo = ["number","plus","number"]
-			typesThree = ["number","minus","number","and"]
-			self.tokenListTwo = createTokenList(typesTwo)
-			self.tokenListThree = createTokenList(typesThree)
+			self.tokenListTwo = breakDownStringToTokens("5 + 5", module = data )
+			self.tokenListThree = breakDownStringToTokens("5 + 5 someword", module = data)
 		
-		self.parser =  ParseText(self.grammar, "baseexpr")
-		self.ast_builder =  AST(tokenlist, trace, start_node)
+		self.parser =  ParseText(data.grammar, "baseexpr")
+		#self.ast_builder =  AST(tokenlist, start_node,self.grammar, nodes)
+		#self.tree = self.ast_builder.createtree("baseexpr", )
 
 	def tearDown(self):
 		print "i m done"
@@ -56,7 +50,9 @@ class EngineRoomTC(unittest.TestCase):
 		self.assertFalse(self.parser.parse(self.tokenListThree))
 
 	def test_build_ast(self):
-		"build AST(SDT)"
+		"build AST(SDT) test"
+
+
 
 		pass
 
