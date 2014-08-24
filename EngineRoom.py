@@ -1,4 +1,5 @@
 import lex
+import sys
 import TokenDef
 from collections import deque  
 
@@ -15,17 +16,22 @@ def breakDownStringToTokens(text):
         return tokenList
 
 
-def createnode(class_name, *args):
-    """Creates SDT('Syntax Directed Translation') node"""
-    node_class = globals()[class_name]
-    instance = node_class(*args)
-    return instance
+# def createnode(class_name, *args):
+#     """Creates SDT('Syntax Directed Translation') node
+#        NOTE : It doesn't work as expected cuz globals 
+#        are related to the module they are called in!
+#        So this function can only be used in this module
+#        aka module it is defined in!!!
+#     """
+#     node_class = globals()[class_name]
+#     instance = node_class(*args)
+#     return instance
 
 
-def createleaf(rule, tokenvalue):
-    """Creates SDT('Syntax Directed Translation') leaf node"""
-    leafnode = createnode(nodes[rule], tokenvalue)
-    return leafnode
+# def createleaf(rule, tokenvalue):
+#     """Creates SDT('Syntax Directed Translation') leaf node"""
+#     leafnode = createnode(nodes[rule], tokenvalue)
+#     return leafnode
 
 
 def resetfileds(fn):
@@ -119,9 +125,12 @@ class ParseText:
     def parse(self, tokenList):
         self._initialize()
         try:
+            print "parsiramo"
+            print self._validate(tokenList)
             return self._validate(tokenList)
-        except Exception:
+        except Exception as e:
             #raise SyntaxException("Not madafakin valid!")
+            print "deste"
             return False
         finally:
             print "doin dis shiat"
@@ -354,7 +363,7 @@ def mergeall(izbaceni, gdejestao):
 
 class AST(object):
 
-    def __init__(self, tokenlist, trace, start_node):
+    def __init__(self, tokenlist, start_node,grammar, nodes):
         """
         Keyword arguments:
 
@@ -364,13 +373,33 @@ class AST(object):
         start_node -- Instace of class associated with start rule
         """
         #self.stack = [BaseExprNode()]
-        self.stack = [start_node]
+        self.start_node = start_node
+        self.tokenlist = tokenlist
+        self.stack = [self.start_node]
         self.stack2 = []
-        self.dek = deque(tokenlist)
-        self.trace = trace
+        self.dek = deque(self.tokenlist)
+        self.grammar = grammar
+        self.nodes = nodes
 
-    def createtree(self, key, grammar, nodes):
-        """Recursively creates SDT tree using language grammar
+    def _initialize(self):
+        self.stack = [self.start_node]
+        self.stack2 = []
+        self.dek = deque(self.tokenlist)
+
+    # TODO initialize before tree creation starts
+    # TODO think about generators
+
+    def createnode(self,class_ref, *args):
+
+        return class_ref(*args)
+
+    def createleaf(self,class_ref, token_value):
+
+        return self.createnode(class_ref, token_value)
+
+    def createtree(self, key, trace):
+        """
+        Recursively creates SDT tree using language grammar
         and trace left by parse function
 
         Keyword arguments:
@@ -378,26 +407,29 @@ class AST(object):
         grammar -- dictionary representing language grammar
         nodes -- dictionary connecting certain (non)terminals 
         and theirs corresponding classes
+
+        createleaf and createnode only works in this module,
+        cuz' of the globals() func which returns m 
         """
-        rulenum = self.trace[key][0][1]
-        for index, rule in enumerate(grammar[key][rulenum]):
-            if rule in nodes:
-                if rule not in grammar:
-                    self.stack[-1].add(createleaf(rule, self.dek.popleft()))
-                    if index == len(grammar[key][rulenum]) - 1 and len(self.stack) > 1:
+        rulenum = trace[key][0][1]
+        for index, rule in enumerate(self.grammar[key][rulenum]):
+            if rule in self.nodes:
+                if rule not in self.grammar:
+                    self.stack[-1].add(self.createleaf(self.nodes[rule], self.dek.popleft()))
+                    if index == len(self.grammar[key][rulenum]) - 1 and len(self.stack) > 1:
                         self.stack.pop()
-                        del self.trace[key][0]
+                        del trace[key][0]
                 else:
-                    node = createnode(nodes[rule])
+                    node = self.createnode(self.nodes[rule])
                     self.stack[-1].add(node)
-                    if index == len(grammar[key][rulenum]) - 1:
+                    if index == len(self.grammar[key][rulenum]) - 1:
                         if len(self.stack) == 1:
                             self.stack2.append(self.stack.pop())
                         else:
                             self.stack.pop()
-                        del self.trace[key][0]
+                        del trace[key][0]
                     self.stack.append(node)
-                    self.createtree(rule, grammar, nodes)
+                    self.createtree(rule,trace)
             else:
                 self.dek.popleft()
 

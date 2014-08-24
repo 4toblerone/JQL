@@ -5,7 +5,7 @@ import sys
 parpath = os.path.join(os.path.dirname(sys.argv[0]), os.pardir)
 sys.path.insert(0, os.path.abspath(parpath))
 
-from EngineRoom import ParseText
+from EngineRoom import ParseText, AST
 from lex import LexToken
 
 class EngineRoomTC(unittest.TestCase):
@@ -43,6 +43,7 @@ class EngineRoomTC(unittest.TestCase):
 			self.tokenListThree = createTokenList(typesThree)
 		
 		self.parser =  ParseText(self.grammar, "baseexpr")
+		self.ast_builder =  AST(tokenlist, trace, start_node)
 
 	def tearDown(self):
 		print "i m done"
@@ -55,8 +56,9 @@ class EngineRoomTC(unittest.TestCase):
 		self.assertFalse(self.parser.parse(self.tokenListThree))
 
 	def test_build_ast(self):
-		"build ast"
+		"build AST(SDT)"
 
 		pass
+
 if __name__ == '__main__':
 	unittest.main()

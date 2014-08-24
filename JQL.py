@@ -2,6 +2,7 @@ import operator
 import json
 from collections import Iterable
 from EngineRoom import AST, ParseText,breakDownStringToTokens
+#from EngineRoom import createnode
 
 
 jsonstring = '{"tim":{"nazivtima":"BobRock" , "igraci" : [{"id" : "prvi" , "ime" : "Sale"},{"id":"drugi","ime" : "Dzoni"}]}}'
@@ -42,6 +43,10 @@ class BaseExprNode(Node):
     def dooperation(self):
         #print "BaseExpr"
         return self.childrens[0].dooperation()
+
+class AndMathOpNode(Node):
+    def dooperation(self):
+        return self.childrens[0].doperation()
 
 
 class StrongExprNode(Node):
@@ -325,40 +330,40 @@ def delete_from_json(path_to_object, json_object, what_to_delete, conditions=Non
         return json_object
 
 
-nodes = {"baseexpr": "BaseExprNode",
-         "strongexpr": "StrongExprNode",
-         "expr": "ExprNode",
-         "queryexpr": "QueryNode",
-         "removeexpr": "RemoveExprNode",
-         "addexpr": "AddExprNode",
-         "updateexpr": "UpdateExprNode",
-         "getexpr": "GetExprNode",
-         "wut": "WutNode",
-         "object": "ObjectNode",
-         "condition": "ConditionNode",
-         "basiccondition": "BasicConditionNode",
-         "value": "ValueNode",
-         "jsonstring": "JsonStringNode",
-         "mathexpr": "MathExprNode",
-         "stringexpr": "StringExprNode",
-         "variable": "VariableNode",
+nodes = {"baseexpr": BaseExprNode,
+         "strongexpr": StrongExprNode,
+         "expr": ExprNode,
+         "queryexpr": QueryNode,
+         "removeexpr": RemoveExprNode,
+         "addexpr": AddExprNode,
+         "updateexpr": UpdateExprNode,
+         "getexpr": GetExprNode,
+         "wut": WutNode,
+         "object": ObjectNode,
+         "condition": ConditionNode,
+         "basiccondition": BasicConditionNode,
+         "value": ValueNode,
+         "jsonstring": JsonStringNode,
+         "mathexpr": MathExprNode,
+         "stringexpr": StringExprNode,
+         "variable": VariableNode,
 
-         "comparisonop": "ComparisonOpNode",
-         "less": "LessNode",
-         "greater": "GreaterNode",
-         "lessorequal": "LessOrEqualNode",
-         "equalorgreater": "EqualOrGreaterNode",
-         "twoequal": "TwoEqualNode",
-         "equal": "EqualNode",
+         "comparisonop": ComparisonOpNode,
+         "less": LessNode,
+         "greater": GreaterNode,
+         "lessorequal": LessOrEqualNode,
+         "equalorgreater": EqualOrGreaterNode,
+         "twoequal": TwoEqualNode,
+         "equal": EqualNode,
 
-         "word": "WordNode",
-         "number": "NumberNode",
+         "word": WordNode,
+         "number": NumberNode,
 
-         "operator": "OperatorNode",
-         "plus": "PlusNode",
-         "minus": "MinusNode",
-         "times": "TimesNode",
-         "divide": "DivideNode"
+         "operator": OperatorNode,
+         "plus": PlusNode,
+         "minus": MinusNode,
+         "times": TimesNode,
+         "divide": DivideNode
 }
 
 
@@ -388,20 +393,29 @@ grammar =  {"baseexpr" : [["andmathop"]],
                           "mathop": [["number","operator","mathop"],["number"]],
                           "operator":[["plus"],["minus"]]}
 
+nodes = {"baseexpr": BaseExprNode,
+         "andmathop" : AndMathOpNode,
+         "mathop" : MathOpNode,
+         "operator" : OperatorNode,
+         "number" : NumberNode,
+         "plus": PlusNode,
+         "minus": MinusNode}
 
 def do_it(query):
 
     token_list = breakDownStringToTokens(query)
+
     parser = ParseText(grammar,"baseexpr")
     print token_list
     if parser.parse(token_list):
         #parser.parse(["number", "minus", "number", "and","number","plus","number"]):
-        #ast = AST(token_list, parser.gdejestao)
-        #ast.createtree("baseexpr")
-        print "json string before running JQL query :"
-        # print jsonstring
-        print "code execution..."
-        #print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
+        b = BaseExprNode()
+        #p = createnode(nodes["baseexpr"])
+        # print p, "ovo"
+        ast = AST(token_list,b,grammar,nodes)
+        ast.createtree("baseexpr", parser.gdejestao)
+        # print ast.stack2
+        print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
     else:
         print "nope doin"
 
@@ -411,4 +425,7 @@ def do_it(query):
 #do_it("from tim get igraci where id == prvi")
 
 if __name__ == '__main__':
-    do_it("5 + 5 +")
+    #print globals()[nodes["baseexpr"]]
+    #print getattr("BaseExprNode")
+    do_it("5 + 5")
+    
