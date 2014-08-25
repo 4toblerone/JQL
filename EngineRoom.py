@@ -2,8 +2,6 @@ import lex
 import TokenDef
 from collections import deque  
 
-
-
 def breakDownStringToTokens(text, module = TokenDef):
         lexer = lex.lex(module)
         lexer.input(text)
@@ -15,33 +13,12 @@ def breakDownStringToTokens(text, module = TokenDef):
             tokenList.append(tok)
         return tokenList
 
-
-# def createnode(class_name, *args):
-#     """Creates SDT('Syntax Directed Translation') node
-#        NOTE : It doesn't work as expected cuz globals 
-#        are related to the module they are called in!
-#        So this function can only be used in this module
-#        aka module it is defined in!!!
-#     """
-#     node_class = globals()[class_name]
-#     instance = node_class(*args)
-#     return instance
-
-
-# def createleaf(rule, tokenvalue):
-#     """Creates SDT('Syntax Directed Translation') leaf node"""
-#     leafnode = createnode(nodes[rule], tokenvalue)
-#     return leafnode
-
-
 def resetfileds(fn):
     """Decorator for reseting object's fields"""
-
     def wrapper(self, *args):
         result = fn(self, *args)
         self.__init__()
         return result
-
     return wrapper
 
 
@@ -54,8 +31,6 @@ def tryit(func):
             func(*args)
         except Exception as e:
             raise SyntaxException("Code is not syntactically correct!")
-        finally:
-            print "finali"
     return wrapit
 
 
@@ -79,7 +54,6 @@ class ParseText:
         """
         self.grammar = grammar
         self.start_nonterminal = start_nonterminal
-        #self._initialize(start_nonterminal)
     
         
     def _initialize(self):
@@ -130,13 +104,7 @@ class ParseText:
             return self._validate(tokenList)
         except Exception as e:
             #raise SyntaxException("Not madafakin valid!")
-            print "deste"
             return False
-        finally:
-            print "doin dis shiat"
-            #this ain't gonna work cuz we need self.gdejestao
-            #to build , so this should be before try/except
-            #self._initialize(self.start_nonterminal)
 
     # TODO get rid of the need for cushion node
     # what if token type defined doesn't exists in grammar dict?
@@ -390,11 +358,9 @@ class AST(object):
     # TODO think about generators
 
     def createnode(self,class_ref, *args):
-
         return class_ref(*args)
 
     def createleaf(self,class_ref, token_value):
-
         return self.createnode(class_ref, token_value)
 
     def createtree(self, key, trace):
@@ -407,9 +373,6 @@ class AST(object):
         grammar -- dictionary representing language grammar
         nodes -- dictionary connecting certain (non)terminals 
         and theirs corresponding classes
-
-        createleaf and createnode only works in this module,
-        cuz' of the globals() func which returns m 
         """
         rulenum = trace[key][0][1]
         for index, rule in enumerate(self.grammar[key][rulenum]):

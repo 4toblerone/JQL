@@ -420,6 +420,7 @@ def do_it(query):
         # print ast.stack2
         #print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
         print ast.stack2[0].dooperation()
+        print ast.stack2
     else:
         print "nope doin"
 

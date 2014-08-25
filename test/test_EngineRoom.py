@@ -12,49 +12,82 @@ from lex import LexToken
 class EngineRoomTC(unittest.TestCase):
 	"""Tests for EngineRoom"""
 
+	def check(node, rule):
+		for r in rule:
+			if r in self.nodes:
+				if r in self.grammar:
+					#then it should be non leaf aka NODE
+					#and be type of nodes[r] points to
+
+					pass
+
 	def setUp(self):
 		print "setting up mock grammar and parser"
-
 		testName = self.shortDescription()
-
-		# def createTokenList(tokTypes):
-		# 	tokens = []
-		# 	for tt in tokTypes:
-		# 		token = LexToken()
-		# 		token.type = tt
-		# 		token.value = "test" 
-		# 		token.lineno = 0 
-		# 		token.lexpos = 0
-		# 		tokens.append(token)
-		# 	return tokens
-			#return [LexToken().type = tt for tt in tokTypes]
-		self.tokenListOne = breakDownStringToTokens("5 + 5 + 5 + 5", module = data)
-		#typesOne = ["number", "minus", "number", "and","number","plus","number"]
-		#self.tokenListOne = createTokenList(typesOne)
-		if testName == "parse test":
-			self.tokenListTwo = breakDownStringToTokens("5 + 5", module = data )
-			self.tokenListThree = breakDownStringToTokens("5 + 5 someword", module = data)
-		
+		self.tokenListOne = breakDownStringToTokens("5 + 5 and 5 + 5", module = data)
+		self.tokenListTwo = breakDownStringToTokens("5 + 5", module = data )
+		start_node =  data.BaseExprNode()
 		self.parser =  ParseText(data.grammar, "baseexpr")
-		#self.ast_builder =  AST(tokenlist, start_node,self.grammar, nodes)
-		#self.tree = self.ast_builder.createtree("baseexpr", )
+
+		if testName == "parse test":
+			
+			self.tokenListThree = breakDownStringToTokens("5 + 5 someword", module = data)
+			self.tokenListFour = breakDownStringToTokens("word 5 + 5", module = data)
+			#FIX THIS! Or Should i?!
+			#self.tokenListFive = breakDownStringToTokens(" ", module = data)
+		elif testName == "execute code":	
+			self.ast =  AST(self.tokenListOne, start_node,data.grammar, data.nodes)
+			self.parser.parse(self.tokenListOne)
+			trace = self.parser.gdejestao
+			self.ast.createtree("baseexpr",trace)
+			print self.ast.stack2[0].dooperation() 
+		elif testName == "build AST test":
+			self.ast =  AST(self.tokenListTwo, start_node,data.grammar, data.nodes)
+			self.parser.parse(self.tokenListTwo)
+			trace = self.parser.gdejestao
+			self.ast.createtree("baseexpr",trace)
+			print "*******", self.tokenListTwo
+			print self.tokenListOne
 
 	def tearDown(self):
 		print "i m done"
 
-	def test_parse(self):
+	def test_parse_function(self):
 		"parse test"
 		#parse func is expecting list of tokens, not strings
 		self.assertTrue(self.parser.parse(self.tokenListOne))
 		self.assertTrue(self.parser.parse(self.tokenListTwo))
 		self.assertFalse(self.parser.parse(self.tokenListThree))
+		self.assertFalse(self.parser.parse(self.tokenListFour))
+		#self.assertFalse(self.parser.parse(self.tokenListFive))
 
+	# TODO find out if generic check function is more suitable
+	# then handwritten one
 	def test_build_ast(self):
-		"build AST(SDT) test"
+		"build AST test"
+		self.assertIsInstance(self.ast.stack2[0], data.BaseExprNode)
+		
+		parent_node =  self.ast.stack2[0]
+		self.assertIsInstance(parent_node.childrens[0], data.AndMathOpNode)
+		
+		child_node = parent_node.childrens[0]
+		self.assertIsInstance(child_node.childrens[0], data.MathOpNode)
+
+		gchild = child_node.childrens[0]
+		self.assertIsInstance(gchild.childrens[0], data.NumberNode)
+		self.assertIsInstance(gchild.childrens[1], data.OperatorNode)
+		self.assertIsInstance(gchild.childrens[2], data.MathOpNode)
+		
+		ggchild_1 =  gchild.childrens[1]
+		self.assertIsInstance(ggchild_1.childrens[0], data.PlusNode)
+
+		ggchild_2 =  gchild.childrens[2]
+		self.assertIsInstance(ggchild_2.childrens[0], data.NumberNode)
 
 
-
-		pass
+	# def test_execute_code(self):
+	# 	"execute code"
+	# 	self.assertEqual(self.ast.stack2[0].dooperation(), 20)
 
 if __name__ == '__main__':
 	unittest.main()

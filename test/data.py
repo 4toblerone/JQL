@@ -3,6 +3,11 @@ import operator
 t_PLUS = r'\+'
 t_MINUS = r'-'
 
+def t_AND(token):
+    r'and'
+    return token
+
+
 def t_WORD(t):
     r'[a-z]+'
     return t
@@ -23,7 +28,7 @@ def t_error(t):
 
 t_ignore = ' \t\v\r'  # shortcut for whitespaces
 
-tokens = ['WORD', 'NUMBER','PLUS', 'MINUS', 'WHITESPACES']
+tokens = ['WORD', 'NUMBER','PLUS', 'MINUS', 'WHITESPACES' ,'AND']
 
 class Node(object):
     """docstring for Node"""
