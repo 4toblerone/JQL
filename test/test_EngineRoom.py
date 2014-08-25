@@ -12,14 +12,14 @@ from lex import LexToken
 class EngineRoomTC(unittest.TestCase):
 	"""Tests for EngineRoom"""
 
-	def check(node, rule):
-		for r in rule:
-			if r in self.nodes:
-				if r in self.grammar:
-					#then it should be non leaf aka NODE
-					#and be type of nodes[r] points to
+	# def check(node, rule):
+	# 	for r in rule:
+	# 		if r in self.nodes:
+	# 			if r in self.grammar:
+	# 				#then it should be non leaf aka NODE
+	# 				#and be type of nodes[r] points to
 
-					pass
+	# 				pass
 
 	def setUp(self):
 		print "setting up mock grammar and parser"
@@ -84,7 +84,7 @@ class EngineRoomTC(unittest.TestCase):
 		ggchild_2 =  gchild.childrens[2]
 		self.assertIsInstance(ggchild_2.childrens[0], data.NumberNode)
 
-
+	
 	# def test_execute_code(self):
 	# 	"execute code"
 	# 	self.assertEqual(self.ast.stack2[0].dooperation(), 20)
