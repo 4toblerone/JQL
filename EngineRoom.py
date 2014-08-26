@@ -1,4 +1,4 @@
-import lex
+import ply.lex as lex
 import TokenDef
 from collections import deque  
 

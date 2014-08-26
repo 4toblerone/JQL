@@ -391,18 +391,6 @@ grammar = {"baseexpr": [["strongexpr"]],
            "stringexpr": [[]],
 }
 
-grammar =  {"baseexpr" : [["andmathop"]],
-                          "andmathop" : [["mathop", "and","andmathop"],["mathop"]],
-                          "mathop": [["number","operator","mathop"],["number"]],
-                          "operator":[["plus"],["minus"]]}
-
-nodes = {"baseexpr": BaseExprNode,
-         "andmathop" : AndMathOpNode,
-         "mathop" : MathOpNode,
-         "operator" : OperatorNode,
-         "number" : NumberNode,
-         "plus": PlusNode,
-         "minus": MinusNode}
 
 def do_it(query):
 
