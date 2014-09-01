@@ -5,13 +5,13 @@ from collections import deque
 def breakDownStringToTokens(text, module = TokenDef):
         lexer = lex.lex(module)
         lexer.input(text)
-        tokenList = []
+        token_list = []
         while True:
             tok = lexer.token()
             if not tok:
                 break
-            tokenList.append(tok)
-        return tokenList
+            token_list.append(tok)
+        return token_list
 
 def resetfileds(fn):
     """Decorator for reseting object's fields"""
@@ -58,28 +58,28 @@ class ParseText:
         
     def _initialize(self):
         #self.start_nonterminal = start_nonterminal
-        self.cacastack = [self.start_nonterminal]
+        self.daddy_stack = [self.start_nonterminal]
         self.helperstack = [[self.start_nonterminal, 0]]
-        self.gdejestao = {self.start_nonterminal: [[0, 0, 0]]}
+        self.where_was_i = {self.start_nonterminal: [[0, 0, 0]]}
         # 3. int sluzi za broja tokena tj da bi se znalo koliko unazad
         # da se vrati u slucaju da ne naidje na odgvarajuce pravilo
         # 2. int oznacava odabrano prailo
         # sta je 1. predjeno pravilo u ovom slucaju token , tj pomeraj u pravilo listi
         self.x = 0
-        self.izbaceni = {}
+        self.removed = {}
 
     def addnewtohs(self, rule):
         self.helperstack.append([rule, 0])
 
     def uphelperstack(self):
-        for upstairrule in self.helperstack:
-            upstairrule[1] += 1
+        for upstair_rule in self.helperstack:
+            upstair_rule[1] += 1
 
     def removefromhs(self):
         tocut = self.helperstack[-1][1]
         del self.helperstack[-1]
-        for upstairrule in self.helperstack:
-            upstairrule[1] -= tocut
+        for upstair_rule in self.helperstack:
+            upstair_rule[1] -= tocut
         return tocut
 
     def downsizehs(self):
@@ -92,16 +92,16 @@ class ParseText:
         del self.helperstack[-1]
 
     def move_forward(self):
-        self.gdejestao[self.cacastack[-1]][-1][1] += 1
-        self.gdejestao[self.cacastack[-1]][-1][0] = 0
-        self.gdejestao[self.cacastack[-1]][-1][2] = 0
+        self.where_was_i[self.daddy_stack[-1]][-1][1] += 1
+        self.where_was_i[self.daddy_stack[-1]][-1][0] = 0
+        self.where_was_i[self.daddy_stack[-1]][-1][2] = 0
 
-    def parse(self, tokenList):
+    def parse(self, token_list):
         self._initialize()
         try:
             print "parsiramo"
-            print self._validate(tokenList)
-            return self._validate(tokenList)
+            print self._validate(token_list)
+            return self._validate(token_list)
         except Exception as e:
             #raise SyntaxException("Not madafakin valid!")
             return False
@@ -113,246 +113,246 @@ class ParseText:
     # What about context menager? Ain't gonna work
     #@resetfileds doesn't work cuz of recursion
     #@tryit , replaced by putting it in proper parse method
-    def _validate(self, tokenList):
+    def _validate(self, token_list):
         """Checks if given stream of tokens can be 
         generated from a given grammar. 
 
         Keywords arguments:
-        tokenList -- list of tokens
+        token_list -- list of tokens
         """
-        listapravila = self.grammar[self.cacastack[-1]][
-            self.gdejestao[self.cacastack[-1]][-1][1]]
+        rule_list = self.grammar[self.daddy_stack[-1]][
+            self.where_was_i[self.daddy_stack[-1]][-1][1]]
         # ovde provera da li je dosao i do kraja pravila
-        if len(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]) == 0:
-            if len(self.cacastack) > 1:
-                self.cacastack.pop()
-                return self._validate(tokenList)
-            elif len(tokenList) > self.x:
+        if len(rule_list[self.where_was_i[self.daddy_stack[-1]][-1][0]:]) == 0:
+            if len(self.daddy_stack) > 1:
+                self.daddy_stack.pop()
+                return self._validate(token_list)
+            elif len(token_list) > self.x:
                 return False
         # da li je presao sve tokene u listi, ako jeste
-        if self.x == len(tokenList):
-            if len(self.cacastack) == 1:
-                self.gdejestao = mergeall(self.izbaceni, self.gdejestao)
+        if self.x == len(token_list):
+            if len(self.daddy_stack) == 1:
+                self.where_was_i = mergeall(self.removed, self.where_was_i)
                 return True
             else:
                 # proveri da li ima jos listi pravila, ako ima prebaci na
                 # sledecu listu i smanji self.x
-                if self.gdejestao[self.cacastack[-1]][-1][1] < len(self.grammar[self.cacastack[-1]]):
-                    self.gdejestao = mergeall(self.izbaceni, self.gdejestao)
-                    self.izbaceni.clear()
-                    while self.helperstack[-1][0] is not self.cacastack[-1]:
-                        # mora se smanjiti i na self.izbacenima ukupan broj...
-                        del self.gdejestao[self.helperstack[-1][0]][-1]
-                        if self.helperstack[-1][0] in self.izbaceni:
-                            self.izbaceni[self.helperstack[-1][0]][0] -= 1
+                if self.where_was_i[self.daddy_stack[-1]][-1][1] < len(self.grammar[self.daddy_stack[-1]]):
+                    self.where_was_i = mergeall(self.removed, self.where_was_i)
+                    self.removed.clear()
+                    while self.helperstack[-1][0] is not self.daddy_stack[-1]:
+                        # mora se smanjiti i na self.removedma ukupan broj...
+                        del self.where_was_i[self.helperstack[-1][0]][-1]
+                        if self.helperstack[-1][0] in self.removed:
+                            self.removed[self.helperstack[-1][0]][0] -= 1
                         self.x -= self.removefromhs()
                     self.move_forward()
-                    return self._validate(tokenList)
+                    return self._validate(token_list)
 
-                if self.gdejestao[self.cacastack[-1]][-1][0] == len(
-                        self.grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]) - 1:
-                    if len(self.cacastack) > 1:
+                if self.where_was_i[self.daddy_stack[-1]][-1][0] == len(
+                        self.grammar[self.daddy_stack[-1]][self.where_was_i[self.daddy_stack[-1]][-1][1]]) - 1:
+                    if len(self.daddy_stack) > 1:
                         # ne moze da se vrati skroz do kraja , tj moze samo do
                         # expr
-                        if len(self.gdejestao[self.cacastack[-1]]) > 1:
-                            poslednji = self.gdejestao[
-                                self.cacastack[-1]].pop()
-                            self.izbaceni[self.cacastack[-1]].append(
-                                (self.izbaceni[self.cacastack[-1]][0], poslednji))
-                            #del self.gdejestao[self.cacastack[-1]][-1]
-                        self.cacastack.pop()
-                        return self._validate(tokenList)
+                        if len(self.where_was_i[self.daddy_stack[-1]]) > 1:
+                            poslednji = self.where_was_i[
+                                self.daddy_stack[-1]].pop()
+                            self.removed[self.daddy_stack[-1]].append(
+                                (self.removed[self.daddy_stack[-1]][0], poslednji))
+                            #del self.where_was_i[self.daddy_stack[-1]][-1]
+                        self.daddy_stack.pop()
+                        return self._validate(token_list)
                 return False
         # ako je na pocetku odredjene grupe pravila (jedno pravilo moze da ima vise grupa pravila)
         # i ako je duzina te grupe pravila veca oda broja preostalih tokena
         # koje treba preci
-        if self.gdejestao[self.cacastack[-1]][-1][0] == 0 and len(listapravila) > len(tokenList) - self.x:
+        if self.where_was_i[self.daddy_stack[-1]][-1][0] == 0 and len(rule_list) > len(token_list) - self.x:
             # ako je broj grupa pravila koja proizilazi iz poslednjeg na stack-u veca od broja predjenih grupa
             # tj ako nije presao sve grupe pravila
-            if len(self.grammar[self.cacastack[-1]]) - 1 > self.gdejestao[self.cacastack[-1]][-1][1]:
+            if len(self.grammar[self.daddy_stack[-1]]) - 1 > self.where_was_i[self.daddy_stack[-1]][-1][1]:
                 # prebaci na sledecu grupu pravila
                 self.move_forward()
                 # ovde izbrisi sa gdejebio poslednji i obrisi decu njegovog
                 # caleta
                 self.x -= self.downsizehs()
-                return self._validate(tokenList)
-            # ukoliko cacastack predzadnji nije na poslednjem pravilu
-            elif len(self.cacastack) > 1:
+                return self._validate(token_list)
+            # ukoliko daddy_stack predzadnji nije na poslednjem pravilu
+            elif len(self.daddy_stack) > 1:
                 # ukoliko je presao sve grupe pravila , obrisi sve sa
                 # helperstacka do c
-                del self.cacastack[-1]
-                while self.helperstack[-1][0] is not self.cacastack[-1]:
-                    if len(self.izbaceni[self.helperstack[-1][0]]) > 1 and self.izbaceni[self.helperstack[-1][0]][-1][
-                        0] == self.izbaceni[self.helperstack[-1][0]][0]:
-                        del self.izbaceni[self.helperstack[-1][0]][-1]
+                del self.daddy_stack[-1]
+                while self.helperstack[-1][0] is not self.daddy_stack[-1]:
+                    if len(self.removed[self.helperstack[-1][0]]) > 1 and self.removed[self.helperstack[-1][0]][-1][
+                        0] == self.removed[self.helperstack[-1][0]][0]:
+                        del self.removed[self.helperstack[-1][0]][-1]
                     else:
-                        del self.gdejestao[self.helperstack[-1][0]][-1]
-                    self.izbaceni[self.helperstack[-1][0]][0] -= 1
+                        del self.where_was_i[self.helperstack[-1][0]][-1]
+                    self.removed[self.helperstack[-1][0]][0] -= 1
                     self.x -= self.removefromhs()
                 self.x -= self.downsizehs()
                 self.move_forward()
-                return self._validate(tokenList)
+                return self._validate(token_list)
             else:
                 return False
-        for index, pravilo in enumerate(listapravila[self.gdejestao[self.cacastack[-1]][-1][0]:]):
+        for index, pravilo in enumerate(rule_list[self.where_was_i[self.daddy_stack[-1]][-1][0]:]):
             # proveri da li je list/terminal i da li je jednak tipu tokena
             if pravilo not in self.grammar.keys():
                 # za svaki sledeci pomeri pokazivac
-                self.gdejestao[self.cacastack[-1]][-1][0] += 1
+                self.where_was_i[self.daddy_stack[-1]][-1][0] += 1
                 # znaci da je list, proveri da li je to taj tip tokena (vodi
                 # racuna na velika/mala slova)
-                if self.x <= len(tokenList) - 1 and pravilo == tokenList[self.x].type.lower():
+                if self.x <= len(token_list) - 1 and pravilo == token_list[self.x].type.lower():
                     self.x += 1
-                    self.gdejestao[self.cacastack[-1]][-1][2] += 1
+                    self.where_was_i[self.daddy_stack[-1]][-1][2] += 1
                     self.uphelperstack()
                     # da li je presao jednu listu pravila , ako jeste i ako na
-                    # cacastack-u ima vise od jednog
-                    if self.gdejestao[self.cacastack[-1]][-1][0] == len(listapravila):
-                        if len(self.cacastack) > 1:  # reason for cushion!
+                    # daddy_stack-u ima vise od jednog
+                    if self.where_was_i[self.daddy_stack[-1]][-1][0] == len(rule_list):
+                        if len(self.daddy_stack) > 1:  # reason for cushion!
                             # ne moze da se vrati skroz do kraja , tj moze samo
                             # do expr
-                            if len(self.gdejestao[self.cacastack[-1]]) > 1:
-                                poslednji = self.gdejestao[
-                                    self.cacastack[-1]].pop()
-                                self.izbaceni[self.cacastack[-1]].append(
-                                    (self.izbaceni[self.cacastack[-1]][0], poslednji))
-                            self.cacastack.pop()
+                            if len(self.where_was_i[self.daddy_stack[-1]]) > 1:
+                                poslednji = self.where_was_i[
+                                    self.daddy_stack[-1]].pop()
+                                self.removed[self.daddy_stack[-1]].append(
+                                    (self.removed[self.daddy_stack[-1]][0], poslednji))
+                            self.daddy_stack.pop()
                             # self.deletelasths()
-                            return self._validate(tokenList)
+                            return self._validate(token_list)
                         else:
                             return False
-                elif self.x <= len(tokenList) - 1 and pravilo != tokenList[self.x].type.lower():
-                    if len(self.grammar[self.cacastack[-1]]) - 1 > self.gdejestao[self.cacastack[-1]][-1][1]:
+                elif self.x <= len(token_list) - 1 and pravilo != token_list[self.x].type.lower():
+                    if len(self.grammar[self.daddy_stack[-1]]) - 1 > self.where_was_i[self.daddy_stack[-1]][-1][1]:
                         # print "da li je i ovde usao a trebalo bi", self.x
-                        self.gdejestao[self.cacastack[-1]][-1][1] += 1
+                        self.where_was_i[self.daddy_stack[-1]][-1][1] += 1
                         # resetuj gde je stao tj x == 0
-                        self.gdejestao[self.cacastack[-1]][-1][0] = 0
+                        self.where_was_i[self.daddy_stack[-1]][-1][0] = 0
                         # smanjujem x za sve pronadjene u tom pravilu
                         # dodaj provere za izbacene ako nema ni jednog u njima
                         # i smanjuj kako ih izbacujes
-                        while self.helperstack[-1][0] is not self.cacastack[-1]:
-                            if len(self.izbaceni[self.helperstack[-1][0]]) > 1 and \
-                                self.izbaceni[self.helperstack[-1][0]][-1][0] == \
-                                self.izbaceni[self.helperstack[-1][0]][0]:
-                                del self.izbaceni[self.helperstack[-1][0]][-1]
+                        while self.helperstack[-1][0] is not self.daddy_stack[-1]:
+                            if len(self.removed[self.helperstack[-1][0]]) > 1 and \
+                                self.removed[self.helperstack[-1][0]][-1][0] == \
+                                self.removed[self.helperstack[-1][0]][0]:
+                                del self.removed[self.helperstack[-1][0]][-1]
                             else:
-                                del self.gdejestao[self.helperstack[-1][0]][-1]
-                            self.izbaceni[self.helperstack[-1][0]][0] -= 1
+                                del self.where_was_i[self.helperstack[-1][0]][-1]
+                            self.removed[self.helperstack[-1][0]][0] -= 1
                             # ne odradi downsize do kraja tj do andmathopa #
                             # ili remove pa na kraju downsize?
                             self.x -= self.removefromhs()
                             # i kako brises sa helperstacka tako brisi
-                            # poslednjeg sa gdejestao+self.izbaceni stacka
+                            # poslednjeg sa where_was_i+self.removed stacka
                         self.x -= self.downsizehs()
-                        self.gdejestao[self.cacastack[-1]][-1][2] = 0
-                        # del self.gdejestao[self.cacastack[-1]][-1]   #baca out ouf range na 87 i ovde je problem
-                        # i ovde smanji za jedan u self.izbacenima
-                        return self._validate(tokenList)
-                    elif len(self.cacastack) > 1:
-                        while self.helperstack[-1][0] is not self.cacastack[-1]:
-                            if len(self.izbaceni[self.helperstack[-1][0]]) > 1 and \
-                                self.izbaceni[self.helperstack[-1][0]][-1][0] == \
-                                self.izbaceni[self.helperstack[-1][0]][0]:
-                                del self.izbaceni[self.helperstack[-1][0]][-1]
+                        self.where_was_i[self.daddy_stack[-1]][-1][2] = 0
+                        # del self.where_was_i[self.daddy_stack[-1]][-1]   #baca out ouf range na 87 i ovde je problem
+                        # i ovde smanji za jedan u self.removedma
+                        return self._validate(token_list)
+                    elif len(self.daddy_stack) > 1:
+                        while self.helperstack[-1][0] is not self.daddy_stack[-1]:
+                            if len(self.removed[self.helperstack[-1][0]]) > 1 and \
+                                self.removed[self.helperstack[-1][0]][-1][0] == \
+                                self.removed[self.helperstack[-1][0]][0]:
+                                del self.removed[self.helperstack[-1][0]][-1]
                             else:
-                                del self.gdejestao[self.helperstack[-1][0]][-1]
-                            self.izbaceni[self.helperstack[-1][0]][0] -= 1
+                                del self.where_was_i[self.helperstack[-1][0]][-1]
+                            self.removed[self.helperstack[-1][0]][0] -= 1
                             self.x -= self.removefromhs()
-                        # ovde mora da poizbacuje sve do cacastacka
+                        # ovde mora da poizbacuje sve do daddy_stacka
                         self.x -= self.downsizehs()
-                        # zameni mesta del sa self.cacastack-a i 467 i mosdef
+                        # zameni mesta del sa self.daddy_stack-a i 467 i mosdef
                         # obrisati poslednji sa gde je stao stacka-a
                         # da li obrisati ovo?
-                        self.gdejestao[self.cacastack[-1]][-1][2] = 0
+                        self.where_was_i[self.daddy_stack[-1]][-1][2] = 0
                         # i ovde takodje smanji izbacene
-                        del self.gdejestao[self.cacastack[-1]][-1]
-                        self.izbaceni[self.cacastack[-1]][0] -= 1
-                        del self.cacastack[-1]
+                        del self.where_was_i[self.daddy_stack[-1]][-1]
+                        self.removed[self.daddy_stack[-1]][0] -= 1
+                        del self.daddy_stack[-1]
                         # ukoliko je nije dosao do poslednje liste pravila, tj.
                         # ukoliko imas jos listi pravila
-                        if len(self.grammar[self.cacastack[-1]]) - 1 > self.gdejestao[self.cacastack[-1]][-1][1]:
+                        if len(self.grammar[self.daddy_stack[-1]]) - 1 > self.where_was_i[self.daddy_stack[-1]][-1][1]:
                             self.move_forward()
                             # downsize sve na helperstacku za onoliko koliko ima na poslednjem,
                             # s tim da ne treba obrisati poslednji
                             self.x -= self.downsizehs()
                             self.deletelasths()
                         else:
-                            # stavi da je dosao do kraja pravila u gdejestao jer ako je == samo ce da
+                            # stavi da je dosao do kraja pravila u where_was_i jer ako je == samo ce da
                             # predje na sledece pravilo a ne niz pravila
-                            # grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]]
-                            self.gdejestao[self.cacastack[-1]][-1][0] = len(
-                                self.grammar[self.cacastack[-1]][self.gdejestao[self.cacastack[-1]][-1][1]])
-                        return self._validate(tokenList)
+                            # grammar[self.daddy_stack[-1]][self.where_was_i[self.daddy_stack[-1]][-1][1]]
+                            self.where_was_i[self.daddy_stack[-1]][-1][0] = len(
+                                self.grammar[self.daddy_stack[-1]][self.where_was_i[self.daddy_stack[-1]][-1][1]])
+                        return self._validate(token_list)
                 else:
                     return False
             # ako nije list/terminal nadji listu sa tim key-em u dictionary-u i
             # dodaj ga na caca stack
             else:
-                # gdejestao[cacastack[-1]][0]=index+1 #nije tu stao, jer index
+                # where_was_i[daddy_stack[-1]][0]=index+1 #nije tu stao, jer index
                 # uvek krece od nule
-                self.gdejestao[self.cacastack[-1]][-1][0] += 1
-                self.cacastack.append(pravilo)
+                self.where_was_i[self.daddy_stack[-1]][-1][0] += 1
+                self.daddy_stack.append(pravilo)
                 self.addnewtohs(pravilo)
-                if pravilo not in self.gdejestao:
-                    self.gdejestao[pravilo] = []
-                self.gdejestao[pravilo].append([0, 0, 0])
-                self.izbaceni[pravilo] = self.izbaceni.get(pravilo, [-1])
-                self.izbaceni[pravilo][0] = len(
-                    self.gdejestao[pravilo]) + len(self.izbaceni[pravilo]) - 2
-                return self._validate(tokenList)
+                if pravilo not in self.where_was_i:
+                    self.where_was_i[pravilo] = []
+                self.where_was_i[pravilo].append([0, 0, 0])
+                self.removed[pravilo] = self.removed.get(pravilo, [-1])
+                self.removed[pravilo][0] = len(
+                    self.where_was_i[pravilo]) + len(self.removed[pravilo]) - 2
+                return self._validate(token_list)
 
 
-def mergeall(izbaceni, gdejestao):
+def mergeall(removed, where_was_i):
 
     def merge(popeditems, key):
 
         lista = []
         i = 0
-        gdejestaodeo = deque(gdejestao[key])
-        length = len(popeditems) + len(gdejestaodeo)  # 3
+        where_was_ideo = deque(where_was_i[key])
+        length = len(popeditems) + len(where_was_ideo)  # 3
         while i < length:
             if popeditems and i == popeditems[0][0]:
                 lista.append(popeditems[0][1])
                 del popeditems[0]
-            elif len(gdejestaodeo) > 0:
-                lista.append(gdejestaodeo[0])
-                del gdejestaodeo[0]
+            elif len(where_was_ideo) > 0:
+                lista.append(where_was_ideo[0])
+                del where_was_ideo[0]
             else:
                 lista.append(popeditems[0][1])
                 del popeditems[0]
             i += 1
         return lista
 
-    for key, value in izbaceni.iteritems():
+    for key, value in removed.iteritems():
         if len(value) > 1:
-            gdejestao[key] = merge(value[1:], key)
-    return gdejestao
+            where_was_i[key] = merge(value[1:], key)
+    return where_was_i
 
 
 class AST(object):
 
-    def __init__(self, tokenlist, start_node,grammar, nodes):
+    def __init__(self, token_list, start_node,grammar, nodes):
         """
         Keyword arguments:
 
-        tokenList -- List of tokens
+        token_list -- List of tokens
         trace -- Dictionary which represents trace parser left while
                  moving 'through' the language grammar
         start_node -- Instace of class associated with start rule
         """
         #self.stack = [BaseExprNode()]
         self.start_node = start_node
-        self.tokenlist = tokenlist
+        self.token_list = token_list
         self.stack = [self.start_node]
         self.stack2 = []
-        self.dek = deque(self.tokenlist)
+        self.dek = deque(self.token_list)
         self.grammar = grammar
         self.nodes = nodes
 
     def _initialize(self):
         self.stack = [self.start_node]
         self.stack2 = []
-        self.dek = deque(self.tokenlist)
+        self.dek = deque(self.token_list)
 
     # TODO initialize before tree creation starts
     # TODO think about generators

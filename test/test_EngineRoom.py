@@ -7,7 +7,7 @@ parpath = os.path.join(os.path.dirname(sys.argv[0]), os.pardir)
 sys.path.insert(0, os.path.abspath(parpath))
 
 from EngineRoom import ParseText, AST, breakDownStringToTokens
-from lex import LexToken
+#from lex import LexToken
 
 class EngineRoomTC(unittest.TestCase):
 	"""Tests for EngineRoom"""
@@ -38,13 +38,13 @@ class EngineRoomTC(unittest.TestCase):
 		elif testName == "execute code":	
 			self.ast =  AST(self.tokenListOne, start_node,data.grammar, data.nodes)
 			self.parser.parse(self.tokenListOne)
-			trace = self.parser.gdejestao
+			trace = self.parser.where_was_i
 			self.ast.createtree("baseexpr",trace)
 			print self.ast.stack2[0].dooperation() 
 		elif testName == "build AST test":
 			self.ast =  AST(self.tokenListTwo, start_node,data.grammar, data.nodes)
 			self.parser.parse(self.tokenListTwo)
-			trace = self.parser.gdejestao
+			trace = self.parser.where_was_i
 			self.ast.createtree("baseexpr",trace)
 			print "*******", self.tokenListTwo
 			print self.tokenListOne
