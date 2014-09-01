@@ -58,14 +58,14 @@ class ParseText:
         
     def _initialize(self):
         #self.start_nonterminal = start_nonterminal
+        # where_was_i[0] -> step in rule list
+        # where_was_i[1] -> choosen rule
+        # where_was_i[2] -> num of tokens, so we can know how
+        # many tokens we need to go back current rule is not ok
         self.daddy_stack = [self.start_nonterminal]
         self.helperstack = [[self.start_nonterminal, 0]]
         self.where_was_i = {self.start_nonterminal: [[0, 0, 0]]}
-        # 3. int sluzi za broja tokena tj da bi se znalo koliko unazad
-        # da se vrati u slucaju da ne naidje na odgvarajuce pravilo
-        # 2. int oznacava odabrano prailo
-        # sta je 1. predjeno pravilo u ovom slucaju token , tj pomeraj u pravilo listi
-        self.x = 0
+        self.x = 0 #all tokens matched
         self.removed = {}
 
     def addnewtohs(self, rule):
@@ -155,10 +155,10 @@ class ParseText:
                         # ne moze da se vrati skroz do kraja , tj moze samo do
                         # expr
                         if len(self.where_was_i[self.daddy_stack[-1]]) > 1:
-                            poslednji = self.where_was_i[
+                            last_one = self.where_was_i[
                                 self.daddy_stack[-1]].pop()
                             self.removed[self.daddy_stack[-1]].append(
-                                (self.removed[self.daddy_stack[-1]][0], poslednji))
+                                (self.removed[self.daddy_stack[-1]][0], last_one))
                             #del self.where_was_i[self.daddy_stack[-1]][-1]
                         self.daddy_stack.pop()
                         return self._validate(token_list)
@@ -308,15 +308,15 @@ def mergeall(removed, where_was_i):
 
         lista = []
         i = 0
-        where_was_ideo = deque(where_was_i[key])
-        length = len(popeditems) + len(where_was_ideo)  # 3
+        where_was_i_part = deque(where_was_i[key])
+        length = len(popeditems) + len(where_was_i_part)  # 3
         while i < length:
             if popeditems and i == popeditems[0][0]:
                 lista.append(popeditems[0][1])
                 del popeditems[0]
-            elif len(where_was_ideo) > 0:
-                lista.append(where_was_ideo[0])
-                del where_was_ideo[0]
+            elif len(where_was_i_part) > 0:
+                lista.append(where_was_i_part[0])
+                del where_was_i_part[0]
             else:
                 lista.append(popeditems[0][1])
                 del popeditems[0]
@@ -356,7 +356,6 @@ class AST(object):
 
     # TODO initialize before tree creation starts
     # TODO think about generators
-
     def createnode(self,class_ref, *args):
         return class_ref(*args)
 

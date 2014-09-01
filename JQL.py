@@ -404,7 +404,7 @@ def do_it(query):
         #p = createnode(nodes["baseexpr"])
         # print p, "ovo"
         ast = AST(token_list,b,grammar,nodes)
-        ast.createtree("baseexpr", parser.gdejestao)
+        ast.createtree("baseexpr", parser.where_was_i)
         # print ast.stack2
         #print json.dumps(ast.stack2[0].dooperation(), indent=4, sort_keys=True)
         print ast.stack2[0].dooperation()
@@ -413,12 +413,12 @@ def do_it(query):
         print "nope doin"
 
 
-#do_it("to tim->igraci where id == prvi add '{\"Novi atribut\" : \"I njegov kljuc\"}'")
+do_it("to tim->igraci where id == prvi add '{\"Novi atribut\" : \"I njegov kljuc\"}'")
 #do_it("update tim->igraci where id == prvi to '{\"hej ovo je\":\"nesto novo\"}'")
 #do_it("from tim get igraci where id == prvi")
 
 if __name__ == '__main__':
     #print globals()[nodes["baseexpr"]]
     #print getattr("BaseExprNode")
-    do_it("5 + 5")
-    
+    #do_it("5 + 5")
+    pass
